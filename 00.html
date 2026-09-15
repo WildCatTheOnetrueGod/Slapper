@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Studio Code</title>
+  <style>
+    /* 預設為 Light Theme 變數 */
+    :root {
+      --bg-menu: #f8f8f8;
+      --bg-activity: #333333;
+      --bg-sidebar: #f3f3f3;
+      --bg-editor: #ffffff;
+      --bg-panel: #ffffff;
+      --bg-statusbar: #007acc;
+      --border-color: #e5e5e5;
+      
+      --text-main: #000000;
+      --text-comment: #008000; /* 綠色註解 */
+      --text-log: #a31515;    /* Log 唯讀文字 */
+      --text-muted: #616161;
+      
+      --active-line-bg: #fff4ce; /* 點擊選取時的高亮 */
+      --hover-bg: #e8e8e8;
+      
+      --tab-bg: #ececec;
+      --tab-active-bg: #ffffff;
+      --minimap-bg: #fafafa;
+      --input-border: #ccc;
+      --modal-bg: #ffffff;
+      --modal-shadow: rgba(0, 0, 0, 0.2);
+      
+      --icon-stroke: #616161;
+      --icon-activity: #858585;
+      --icon-activity-active: #ffffff;
+    }
+
+    /* Dark Theme 變數 */
+    body.theme-dark {
+      --bg-menu: #1e1e1e;
+      --bg-activity: #181818;
+      --bg-sidebar: #181818;
+      --bg-editor: #1e1e1e;
+      --bg-panel: #1e1e1e;
+      --bg-statusbar: #007acc;
+      --border-color: #2b2b2b;
+      
+      --text-main: #cccccc;
+      --text-comment: #6a9955; /* 深色主題綠色註解 */
+      --text-log: #ce9178;    /* 深色主題橘粉色 Log */
+      --text-muted: #858585;
+      
+      --active-line-bg: #264f78; /* 深色選取底色 */
+      --hover-bg: #2a2d2e;
+      
+      --tab-bg: #181818;
+      --tab-active-bg: #1e1e1e;
+      --minimap-bg: #1e1e1e;
+      --input-border: #3c3c3c;
+      --modal-bg: #252526;
+      --modal-shadow: rgba(0, 0, 0, 0.6);
+
+      --icon-stroke: #cccccc;
+      --icon-activity: #858585;
+      --icon-activity-active: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-editor);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* 通用 Line Icon 樣式 */
+    .line-icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    /* 1. 頂部選單與搜尋列 */
+    .top-menu-bar {
+      height: 35px;
+      background-color: var(--bg-menu);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .menu-items {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .menu-btn {
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .menu-btn:hover { background-color: var(--hover-bg); }
+    .menu-btn:active { background-color: rgba(255,255,255,0.1); }
+
+    .search-box-mock {
+      background: var(--bg-editor);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      padding: 2px 12px;
+      width: 240px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .search-box-mock:hover { border-color: #0078d4; }
+
+    .top-right-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: 4px;
+    }
+
+    .theme-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    .theme-btn-light {
+      background-color: #ffffff;
+      box-shadow: 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    .theme-btn-dark {
+      background-color: #1e1e1e;
+      box-shadow: 0 0 2px rgba(255,255,255,0.3);
+    }
+
+    .theme-btn.active {
+      border: 2px solid #0078d4;
+      transform: scale(1.1);
+    }
+
+    .btn-update {
+      background-color: #0078d4;
+      color: white;
+      border: none;
+      padding: 3px 10px;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-update:hover { background-color: #005a9e; }
+
+    .win-control-btn {
+      padding: 2px 6px;
+      cursor: pointer;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .win-control-btn:hover { background-color: var(--hover-bg); }
+
+    /* 2. Tabs 與 Breadcrumbs */
+    .tabs-bar {
+      height: 35px;
+      background-color: var(--tab-bg);
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+
+    .tab {
+      background-color: var(--tab-active-bg);
+      padding: 8px 12px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-right: 1px solid var(--border-color);
+      border-top: 2px solid #007acc;
+      height: 100%;
+      min-width: 100px;
+      cursor: pointer;
+    }
+
+    .tab-inactive {
+      background-color: var(--tab-bg);
+      border-top: none;
+      color: var(--text-muted);
+    }
+    .tab-inactive:hover { background-color: var(--hover-bg); }
+
+    .breadcrumbs {
+      height: 22px;
+      background-color: var(--bg-editor);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      gap: 4px;
+    }
+
+    .crumb-item { cursor: pointer; padding: 0 2px; border-radius: 2px; }
+    .crumb-item:hover { background-color: var(--hover-bg); color: var(--text-main); }
+
+    /* 3. 主區域 Layout */
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Activity Bar */
+    .activity-bar {
+      width: 48px;
+      background-color: var(--bg-activity);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 10px;
+      gap: 16px;
+      color: var(--icon-activity);
+    }
+
+    .act-icon {
+      width: 100%;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .act-icon .line-icon {
+      width: 22px;
+      height: 22px;
+    }
+    .act-icon:hover { color: #ffffff; }
+    .act-icon.active {
+      color: var(--icon-activity-active);
+      border-left: 2px solid #ffffff;
+    }
+
+    /* Sidebar (Explorer) */
+    .sidebar {
+      width: 220px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      color: var(--text-main);
+    }
+
+    .sidebar-title {
+      padding: 8px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .file-tree {
+      overflow-y: auto;
+      flex: 1;
+      font-family: Consolas, monospace;
+    }
+
+    .tree-item {
+      padding: 3px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tree-item:hover { background-color: var(--hover-bg); }
+    .tree-item.active {
+      background-color: var(--hover-bg);
+      font-weight: bold;
+    }
+
+    .tree-indent { margin-left: 12px; }
+
+    /* 4. 編輯器核心 */
+    .editor-wrapper {
+      flex: 1;
+      display: flex;
+      position: relative;
+      background-color: var(--bg-editor);
+      overflow: hidden;
+    }
+
+    .editor-container {
+      flex: 1;
+      overflow: auto;
+      padding: 5px 0;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .editor-table {
+      display: block;          
+      width: 100%;             
+      min-width: 300px;        
+      border-collapse: collapse;
+    }
+
+    .log-line-row {
+      display: flex;
+      align-items: center;
+      height: 22px;
+      line-height: 22px;
+      cursor: text;
+      width: 600px;
+      overflow-x: auto;
+    }
+
+    .log-line-row.active-row {
+      background-color: var(--active-line-bg) !important;
+    }
+
+    .line-number-cell {
+      flex-shrink: 0;
+      width: 45px;
+      text-align: right;
+      padding-right: 12px;
+      color: #2b91af;
+      font-size: 13px;
+      user-select: none;
+    }
+
+    body.theme-dark .line-number-cell {
+      color: #858585;
+    }
+
+    .line-content-cell {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      padding-right: 10px;
+      overflow: hidden;
+      min-width: 0; /* 防止子元素溢出破壞 flex 排版 */
+      white-space: nowrap;
+    }
+    /* 輸入框包覆區域：垂直居中、不折行 */
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+    }
+    /* 註解前綴：禁止選取、禁止壓縮、預設淺色主題綠 */
+    .comment-prefix {
+      user-select: none;
+      -webkit-user-select: none;
+      white-space: pre;
+      color: var(--text-comment); /* 淺色主題：VS Code 經典深綠 */
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      font-weight: bold;
+      flex-shrink: 0; /* 防止寬度不足時被擠壓上飄或變形 */
+    }
+    .log-text {
+      color: var(--text-log);
+      pointer-events: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .novel-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-comment);
+      font-size: 13px;
+      font-family: Consolas, "Courier New", monospace;
+      padding-left: 6px;
+      user-select: text;
+      font-weight: bold;
+      flex: 1;
+      min-width: 0px;
+      vertical-align: middle;
+    }
+
+    /* Minimap 縮圖列 */
+    .minimap-wrapper {
+      width: 90px;
+      background-color: var(--minimap-bg);
+      border-left: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #minimapCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 5. 說明彈窗 (Readme Modal) & 載入提示 Confirm Modal */
+    .readme-modal {
+      position: absolute;
+      top: 40px;
+      left: 230px;
+      width: 380px;
+      background-color: var(--modal-bg);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 16px var(--modal-shadow);
+      border-radius: 6px;
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      color: var(--text-main);
+    }
+
+    .readme-modal.show {
+      display: flex;
+    }
+
+    .readme-header {
+      padding: 10px 14px;
+      background-color: var(--bg-menu);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .readme-close {
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+      color: var(--text-muted);
+    }
+    .readme-close:hover { color: var(--text-main); }
+
+    .readme-body {
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .readme-body ol {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .readme-body li {
+      margin-bottom: 6px;
+    }
+
+    /* 通用 Modal 遮罩 (用於載入確認) */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.4);
+      z-index: 10001;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .confirm-dialog {
+      background-color: var(--modal-bg);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 24px var(--modal-shadow);
+      border-radius: 6px;
+      width: 320px;
+      padding: 16px;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .confirm-dialog-title {
+      font-size: 13px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .confirm-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .confirm-btn {
+      padding: 5px 14px;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+    }
+
+    .confirm-btn-primary {
+      background-color: #007acc;
+      color: white;
+      border: none;
+    }
+    .confirm-btn-primary:hover { background-color: #005a9e; }
+
+    .confirm-btn-secondary {
+      background-color: transparent;
+      color: var(--text-main);
+    }
+    .confirm-btn-secondary:hover { background-color: var(--hover-bg); }
+
+    /* 6. 底部 Panel */
+    .bottom-panel {
+      height: 130px;
+      background-color: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      height: 28px;
+      background-color: var(--bg-menu);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-tab {
+      cursor: pointer;
+      padding: 4px 2px;
+      border-bottom: 2px solid transparent;
+    }
+    .panel-tab:hover { color: var(--text-main); }
+    .panel-tab.active {
+      color: var(--text-main);
+      font-weight: bold;
+      border-bottom-color: #007acc;
+    }
+
+    .output-btn {
+      color: #008000 !important;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    body.theme-dark .output-btn {
+      color: #6a9955 !important;
+    }
+    .output-btn:hover { text-decoration: underline; }
+
+    .next-btn {
+      color: #007acc !important;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .next-btn:hover { text-decoration: underline; }
+
+    .panel-content {
+      flex: 1;
+      padding: 8px 12px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: var(--text-main);
+      background-color: var(--bg-panel);
+      overflow-y: auto;
+    }
+
+    /* 7. Status Bar */
+    .statusbar {
+      height: 22px;
+      background-color: var(--bg-statusbar);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 11px;
+    }
+
+    .status-item {
+      padding: 0 6px;
+      cursor: pointer;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-item:hover { background-color: rgba(255,255,255,0.2); }
+
+    /* 8. Toast 通知樣式 */
+    .toast-container {
+      position: fixed;
+      top: 45px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      background-color: #007acc;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast 通知容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 載入歷史紀錄確認視窗 -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="confirm-dialog">
+      <div class="confirm-dialog-title">
+        <svg class="line-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        載入上次輸入內容？
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted);">偵測到 LocalStorage 中存在上次未完成的文字紀錄。</div>
+      <div class="confirm-dialog-actions">
+        <button class="confirm-btn confirm-btn-secondary" id="btnConfirmNo">否</button>
+        <button class="confirm-btn confirm-btn-primary" id="btnConfirmYes">是</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隱藏的檔案上傳輸入框 -->
+  <input type="file" id="fileInput" accept=".txt,.log" style="display: none;">
+
+  <!-- 1. Top Menu Bar -->
+  <div class="top-menu-bar">
+    <div class="menu-items">
+      <span class="menu-btn" id="btnOpenFile">File</span>
+      <span class="menu-btn">Edit</span>
+      <span class="menu-btn">Selection</span>
+      <span class="menu-btn">View</span>
+      <span class="menu-btn">Go</span>
+      <span class="menu-btn">Run</span>
+      <span class="menu-btn">Terminal</span>
+      <span class="menu-btn">Help</span>
+    </div>
+    <div class="search-box-mock" title="點擊選擇並載入檔案" id="search-box-mock">
+      <svg class="line-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Web</span>
+    </div>
+    <div class="top-right-controls">
+      <!-- 主題切換圓形按鈕 -->
+      <div class="theme-toggle-group">
+        <div class="theme-btn theme-btn-light active" id="btnThemeLight" title="切換為淺色主題"></div>
+        <div class="theme-btn theme-btn-dark" id="btnThemeDark" title="切換為深色主題"></div>
+      </div>
+      <button class="btn-update">Update</button>
+      <span class="win-control-btn">
+        <svg class="line-icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+      </span>
+      <span class="win-control-btn">
+        <svg class="line-icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- 2. Tabs Bar -->
+  <div class="tabs-bar">
+    <div class="tab">
+      <svg class="line-icon" viewBox="0 0 24 24" style="color: #e37933;"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span id="activeTabName">index.html</span>
+    </div>
+  </div>
+
+  <!-- Breadcrumbs -->
+  <div class="breadcrumbs">
+    <span class="crumb-item" id="crumbFileName">index.html</span> &gt; 
+    <span class="crumb-item">html</span> &gt; 
+    <span class="crumb-item">body</span> &gt; 
+    <span class="crumb-item">div.main-wrapper</span> &gt; 
+    <span class="crumb-item">div#side-bar.side-bar</span>
+  </div>
+
+  <div class="main-container">
+    <!-- Readme 說明彈窗 -->
+    <div class="readme-modal" id="readmeModal">
+      <div class="readme-header">
+        <span style="display: flex; align-items: center; gap: 6px;">
+          <svg class="line-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          readme.md 使用說明
+        </span>
+        <span class="readme-close" id="btnCloseReadme">✕</span>
+      </div>
+      <div class="readme-body">
+        安安~這是個摸魚打字小網頁，你可以
+        <ol>
+          <li>點擊右邊空白處開始打字</li>
+          <li>點擊左下綠色「Output」按鈕可將你的文字輸出txt</li>
+          <li>以「+」結尾，可在輸出時將本行與次行並為一行</li>
+          <li>文字長度超出視窗時，也會自動換行，並以「+」結尾</li>
+          <li>寫到最後一行時，按Enter鍵會自動填充下一行</li>
+          <li>前項：按左下「Next」也可達到同樣效果</li>
+          <li>點擊上方框框可自行替換log/程式內容</li>
+          <li>右上「Update」左邊的元件可切換主題</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Activity Bar -->
+    <div class="activity-bar">
+      <div class="act-icon active" title="Explorer">
+        <svg class="line-icon" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      </div>
+      <div class="act-icon" title="Search">
+        <svg class="line-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="act-icon" title="Source Control">
+        <svg class="line-icon" viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 15V9a9 9 0 0 0-9-9"/><line x1="6" y1="9" x2="6" y2="15"/></svg>
+      </div>
+      <div class="act-icon" title="Run and Debug">
+        <svg class="line-icon" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="20" rx="4"/><line x1="2" y1="8" x2="6" y2="8"/><line x1="18" y1="8" x2="22" y2="8"/><line x1="2" y1="16" x2="6" y2="16"/><line x1="18" y1="16" x2="22" y2="16"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+      </div>
+      <div class="act-icon" title="Extensions">
+        <svg class="line-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+    </div>
+
+    <!-- Sidebar (Explorer) -->
+    <div class="sidebar">
+      <div class="sidebar-title">Explorer</div>
+      <div class="file-tree">
+        <div class="tree-item">
+          <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <b>Web</b>
+        </div>
+        <div class="tree-item tree-indent">
+          <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          img
+        </div>
+        <div class="tree-item tree-indent">
+          <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          js
+        </div>
+        <div class="tree-item tree-indent" style="padding-left:24px;">
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          JS Node.js
+        </div>
+        <div class="tree-item tree-indent">
+          <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          txt
+        </div>
+        <div class="tree-item tree-indent">
+          <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          vid
+        </div>
+        <div class="tree-item tree-indent">
+          <svg class="line-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          index.html
+        </div>
+        <div class="tree-item tree-indent">
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          index.css
+        </div>
+        <div class="tree-item tree-indent active" id="treeActiveFile">
+          <svg class="line-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          index.html
+        </div>
+        <div class="tree-item tree-indent" id="btnReadme">
+          <svg class="line-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          readme.md
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Editor Area -->
+    <div class="editor-wrapper">
+      <div class="editor-container" id="editorContainer">
+        <div class="editor-table" id="editorTable"></div>
+      </div>
+
+      <!-- Minimap -->
+      <div class="minimap-wrapper">
+        <canvas id="minimapCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Bottom Panel -->
+  <div class="bottom-panel">
+    <div class="panel-header">
+      <span class="panel-tab">Problems</span>
+      <span class="panel-tab output-btn" id="downloadOutputBtn" title="點擊下載小說純內文">Output</span>
+      <span class="panel-tab">Debug Console</span>
+      <span class="panel-tab active">Terminal</span>
+      <span class="panel-tab">Ports</span>
+      <span class="panel-tab next-btn" id="nextLogBtn" title="新增一行並重複參照 Log">Next</span>
+    </div>
+    <div class="panel-content" id="panel-content"></div>
+  </div>
+
+  <!-- 6. Status Bar -->
+  <div class="statusbar">
+    <div>
+      <span class="status-item">
+        <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        0
+        <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        0
+      </span>
+    </div>
+    <div>
+      <span class="status-item" id="wordCountInfo">Cnt: 0</span>
+      <span class="status-item" id="cursorPosInfo">Ln 1, Col 1</span>
+      <span class="status-item">Spaces: 4</span>
+      <span class="status-item">UTF-8</span>
+      <span class="status-item">CRLF</span>
+      <span class="status-item">
+        <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        HTML
+      </span>
+      <span class="status-item">
+        <svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        Go Live
+      </span>
+    </div>
+  </div>
+
+  <script>
+// 預設 Log 資料
+const defaultErrCode = 
+`2026-09-05 00:01:12:402 : 21, LastWhiteID_EMV=6830037
+2026-09-05 00:02:43:388 : 21, LastWhiteID_EMV=6830042
+2026-09-05 00:02:53:489 : 21, LastDenyID_EMV=338769
+2026-09-05 00:03:23:751 : 21, LastDenyID_EMV=338770
+2026-09-05 00:03:33:846 : 21, LastWhiteID_EMV=6830044
+2026-09-05 00:03:43:942 : 21, LastWhiteID_EMV=6830046
+2026-09-05 00:03:44:864 : 20, Paid: Allow exit, EMV is in white list(Visa), Amount: 65, CurrentFareMode: NORMAL, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:44:895 : 20, Add To Pending Upload List, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:45:051 : 22, Received AG Passage Reply For EMV, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:45:333 : 15, PaymentResultList_EMV.Count > 0, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:45:379 : 15, AG Accepted, Ready to send txn to server, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:46:619 : 15, Remove PendingUploadList_EMV, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:46:635 : 15, Remove PaymentResultList_EMV, CardID: /Dfc6stEIk3116zGC8+KiZMjUr90LFuMs+8Ls/DO3Aw=
+2026-09-05 00:03:54:058 : 21, LastWhiteID_EMV=6830048
+2026-09-05 00:03:54:089 : 21, LastDenyID_EMV=338771
+2026-09-05 00:04:24:326 : 20, Paid: Allow exit, EMV is in white list(MasterCard), Amount: 60, CurrentFareMode: NORMAL, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:24:357 : 20, Add To Pending Upload List, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:24:372 : 21, LastWhiteID_EMV=6830049
+2026-09-05 00:04:24:623 : 22, Received AG Passage Reply For EMV, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:24:998 : 15, PaymentResultList_EMV.Count > 0, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:25:030 : 15, AG Accepted, Ready to send txn to server, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:28:968 : 15, Remove PendingUploadList_EMV, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:28:999 : 15, Remove PaymentResultList_EMV, CardID: 0U6Zc2dBfjUwtG0cLkSY7gLDHWchmgK1LPLCI/mDxCc=
+2026-09-05 00:04:34:585 : 21, LastWhiteID_EMV=6830050
+2026-09-05 00:04:44:715 : 21, LastDenyID_EMV=338772
+2026-09-05 00:04:54:818 : 21, LastWhiteID_EMV=6830052
+2026-09-05 08:17:56:764 : 21, LastWhiteID_EMV=6831194
+2026-09-05 08:18:17:045 : 21, LastWhiteID_EMV=6831196
+2026-09-05 08:18:37:279 : 21, LastWhiteID_EMV=6831197`;
+
+const editorTable = document.getElementById('editorTable');
+const cursorPosInfo = document.getElementById('cursorPosInfo');
+const wordCountInfo = document.getElementById('wordCountInfo');
+const fileInput = document.getElementById('fileInput');
+const minimapCanvas = document.getElementById('minimapCanvas');
+const toastContainer = document.getElementById('toastContainer');
+const ctx = minimapCanvas.getContext('2d');
+
+let globalParsedLines = [];
+let nextLogIndex = 0; 
+let lastMilestone = 0; 
+let isAutoSave = true; // 自動儲存狀態預設開啟
+
+// SVG Line Icon 定義
+const checkIconSVG = `<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`;
+const cancelIconSVG = `<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`;
+
+// 顯示 Toast 通知
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg';
+  toast.innerHTML = `<svg class="line-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>${message}</span>`;
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// 計算總字數並處理突破提示與自動儲存
+function updateWordCount() {
+  const inputs = document.querySelectorAll('.novel-input');
+  let totalCount = 0;
+
+  inputs.forEach(input => {
+    let text = input.value; 
+    text = text.replace(/[\+\*]+$/, '');            
+    text = text.replace(/\s+/g, '');                
+    totalCount += text.length;
+  });
+
+  wordCountInfo.textContent = `Cnt: ${totalCount}`;
+
+  if (totalCount >= 1000) {
+    const currentMilestone = Math.floor(totalCount / 1000) * 1000;
+    if (currentMilestone > lastMilestone) {
+      lastMilestone = currentMilestone;
+      showToast(`恭喜已達到 ${currentMilestone} 字！`);
+    }
+  } else {
+    lastMilestone = 0;
+  }
+}
+
+// 測量文字寬度
+const measureCanvas = document.createElement('canvas');
+const measureCtx = measureCanvas.getContext('2d');
+
+function getTextWidth(text, font) {
+  measureCtx.font = font || '13px Consolas, "Courier New", monospace';
+  return measureCtx.measureText(text).width;
+}
+
+function clearRowHighlights() {
+  document.querySelectorAll('.log-line-row').forEach(row => {
+    row.classList.remove('active-row');
+  });
+}
+
+function drawMinimap(lines) {
+  const rect = minimapCanvas.getBoundingClientRect();
+  minimapCanvas.width = rect.width;
+  minimapCanvas.height = rect.height;
+
+  ctx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+  if (!lines || lines.length === 0) return;
+
+  const totalLines = lines.length;
+  const rowHeight = Math.max(1, minimapCanvas.height / totalLines);
+
+  const isDark = document.body.classList.contains('theme-dark');
+  ctx.fillStyle = isDark ? '#ce9178' : '#a31515';
+
+  lines.forEach((line, i) => {
+    const y = i * rowHeight;
+    const lineLen = Math.min(line.length, 60);
+    const lineWidth = (lineLen / 60) * (minimapCanvas.width - 10);
+    ctx.fillRect(4, y, Math.max(2, lineWidth), Math.max(0.8, rowHeight * 0.8));
+  });
+}
+
+function createRow(lineText, index, initialValue = "") {
+  const row = document.createElement('div');
+  row.className = 'log-line-row';
+
+  const numCell = document.createElement('div');
+  numCell.className = 'line-number-cell';
+  numCell.textContent = index + 1;
+
+  const contentCell = document.createElement('div');
+  contentCell.className = 'line-content-cell';
+
+  const logSpan = document.createElement('span');
+  logSpan.className = 'log-text';
+  logSpan.textContent = lineText;
+
+  // 包裹選取區塊：將不可選取的 "// " 與可輸入的 <input> 包在一起
+  const inputWrapper = document.createElement('div');
+  inputWrapper.className = 'input-wrapper';
+
+  const prefixSpan = document.createElement('span');
+  prefixSpan.className = 'comment-prefix';
+  prefixSpan.textContent = ' // ';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'novel-input';
+  input.value = initialValue;
+
+  const setActive = () => {
+    clearRowHighlights();
+    row.classList.add('active-row');
+    cursorPosInfo.textContent = `Ln ${index + 1}, Col ${input.selectionStart + 1}`;
+  };
+
+  row.addEventListener('click', () => {
+    setActive();
+    input.focus();
+  });
+
+  input.addEventListener('focus', setActive);
+
+  // 處理 Enter 斷行 (修復光標在字中間時的切分問題)
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+
+      const caretPos = input.selectionStart;
+      const fullText = input.value;
+      const keepText = fullText.slice(0, caretPos); // 游標前的文字
+      const moveText = fullText.slice(caretPos);    // 游標後的文字
+
+      input.value = keepText; // 當前行保留游標前文字
+
+      let nextRow = editorTable.children[index + 1];
+
+      if (nextRow) {
+        // 如果已有下一行，將游標後文字加到下一行最前面
+        const nextInput = nextRow.querySelector('.novel-input');
+        if (nextInput) {
+          nextInput.value = moveText + nextInput.value;
+          nextInput.focus();
+          nextInput.setSelectionRange(0, 0); // 光標移至下一行開頭
+        }
+      } else {
+        // 如果是最後一行，新增一行並把文字搬過去
+        const refLogText = appendNextLogLine();
+        const newRow = createRow(refLogText, editorTable.children.length, moveText);
+        editorTable.appendChild(newRow);
+        drawMinimap(globalParsedLines);
+
+        const newInput = newRow.querySelector('.novel-input');
+        if (newInput) {
+          newInput.focus();
+          newInput.setSelectionRange(0, 0); // 光標移至新行開頭
+          newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+
+      updateWordCount();
+    }
+  });
+
+  inputWrapper.appendChild(prefixSpan);
+  inputWrapper.appendChild(input);
+
+  contentCell.appendChild(logSpan);
+  contentCell.appendChild(inputWrapper);
+  row.appendChild(numCell);
+  row.appendChild(contentCell);
+
+  return row;
+}
+
+function appendNextLogLine() {
+  if (!globalParsedLines || globalParsedLines.length === 0) return "";
+  const refLogText = globalParsedLines[nextLogIndex % globalParsedLines.length];
+  nextLogIndex++;
+  return refLogText;
+}
+
+function triggerNextLineAndFocus() {
+  const refLogText = appendNextLogLine();
+  const newIndex = editorTable.children.length;
+  const newRow = createRow(refLogText, newIndex);
+  editorTable.appendChild(newRow);
+  drawMinimap(globalParsedLines);
+  updateWordCount();
+
+  const newInput = newRow.querySelector('.novel-input');
+  if (newInput) {
+    newInput.focus();
+    newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function renderLogContent(rawText, currentFileName) {
+  editorTable.innerHTML = '';
+  globalParsedLines = rawText.split(/\r?\n/);
+  nextLogIndex = 0; 
+
+  if (currentFileName) {
+    document.getElementById('search-box-mock').querySelector('span').textContent = currentFileName;
+    document.getElementById('activeTabName').textContent = currentFileName;
+    document.getElementById('crumbFileName').textContent = currentFileName;
+    document.getElementById('treeActiveFile').lastChild.textContent = ` ${currentFileName}`;
+    document.getElementById('panel-content').innerHTML = `PS C:\\Users\\T02799\\Downloads\\${currentFileName}&gt; <i>Type <b>copilot</b> to use Copilot CLI.</i><br>
+      <span style="color: var(--text-muted);">Start typing to dismiss or don't show this again.</span>`;
+  }
+
+  globalParsedLines.forEach((lineText, index) => {
+    const row = createRow(lineText, index);
+    editorTable.appendChild(row);
+  });
+
+  drawMinimap(globalParsedLines);
+  updateWordCount();
+}
+
+// 初始化與歷史紀錄復原檢查
+const now = new Date();
+const initialFileName = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_info.txt`;
+renderLogContent(defaultErrCode, initialFileName);
+
+// 綁定 Next 按鈕
+document.getElementById('nextLogBtn').addEventListener('click', triggerNextLineAndFocus);
+
+window.addEventListener('resize', () => {
+  drawMinimap(globalParsedLines);
+});
+
+const triggerFileOpen = () => fileInput.click();
+document.getElementById('btnOpenFile').addEventListener('click', triggerFileOpen);
+document.getElementById('search-box-mock').addEventListener('click', triggerFileOpen);
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    renderLogContent(evt.target.result, file.name);
+  };
+  reader.readAsText(file, 'UTF-8');
+  fileInput.value = '';
+});
+
+// 下載小說純內文
+document.getElementById('downloadOutputBtn').addEventListener('click', () => {
+  const inputs = document.querySelectorAll('.novel-input');
+  const rawUserLines = [];
+
+  inputs.forEach(input => {
+    const cleanText = input.value.trim();
+    rawUserLines.push(cleanText);
+  });
+
+  const mergedUserLines = [];
+  let tempBuffer = "";
+
+  rawUserLines.forEach(line => {
+    if (!line && !tempBuffer) return;
+
+    if (line.endsWith('+')) {
+      tempBuffer += line.slice(0, -1);
+    } else {
+      tempBuffer += line;
+      if (tempBuffer) {
+        mergedUserLines.push(tempBuffer);
+        tempBuffer = "";
+      }
+    }
+  });
+
+  if (tempBuffer) {
+    mergedUserLines.push(tempBuffer);
+  }
+
+  const fullText = mergedUserLines.join('\n');
+
+  if (!fullText.trim()) {
+    alert("尚無輸入任何文字！");
+    return;
+  }
+
+  const currentDate = new Date();
+  const exportFileName = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}_info.txt`;
+
+  const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = exportFileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+
+// Readme 彈窗
+const readmeModal = document.getElementById('readmeModal');
+document.getElementById('btnReadme').addEventListener('click', (e) => {
+  e.stopPropagation();
+  readmeModal.classList.toggle('show');
+});
+
+document.getElementById('btnCloseReadme').addEventListener('click', () => {
+  readmeModal.classList.remove('show');
+});
+
+document.addEventListener('click', (e) => {
+  if (!readmeModal.contains(e.target) && !e.target.closest('#btnReadme')) {
+    readmeModal.classList.remove('show');
+  }
+});
+
+// 主題切換
+const btnThemeLight = document.getElementById('btnThemeLight');
+const btnThemeDark = document.getElementById('btnThemeDark');
+
+btnThemeLight.addEventListener('click', () => {
+  document.body.classList.remove('theme-dark');
+  btnThemeLight.classList.add('active');
+  btnThemeDark.classList.remove('active');
+  drawMinimap(globalParsedLines);
+});
+
+btnThemeDark.addEventListener('click', () => {
+  document.body.classList.add('theme-dark');
+  btnThemeDark.classList.add('active');
+  btnThemeLight.classList.remove('active');
+  drawMinimap(globalParsedLines);
+});
+
+// 底部面板 Tab
+document.querySelectorAll('.panel-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    if (this.classList.contains('output-btn') || this.classList.contains('next-btn')) return;
+    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+  </script>
+</body>
+</html>
