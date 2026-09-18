@@ -1,0 +1,82 @@
+/* 3. 網頁嵌入 (Web Panel) */
+/* 功能列 */
+.web-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 5px;
+  background-color: transparent;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.web-select, .web-btn {
+  height: 25px;
+  padding: 0 10px;
+  font-size: 14px;
+  border: 1px solid var(--text-muted);
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.web-input {
+  flex: 1;
+  height: 25px;
+  width: 80px;
+  padding: 0 10px;
+  font-size: 14px;
+  border: 1px solid var(--text-muted);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.web-btn {
+  /* background-color: #007bff; */
+  color: var(--text-main);
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.web-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 內容列 */
+.web-content {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  padding: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+/* 文字檔顯示容器 */
+.web-text-display {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: monospace, sans-serif;
+  font-size: 14px;
+  color: var(--overlay-text-color);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* iframe 顯示設定 */
+.web-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* 預設占位文字 */
+.web-placeholder {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 14px;
+}
