@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF閱讀器</title>
+  <link rel="stylesheet" href="../css/00shared.css">
+  <link rel="stylesheet" href="../css/02.css">
+  <link rel="stylesheet" href="../css/editor.css">
+  <link rel="stylesheet" href="../css/draw.css">
+  <link rel="stylesheet" href="../css/embed.css">
+  <link rel="stylesheet" href="../css/markdown.css">
+</head>
+<body>
+  <!-- 內容列 (佔滿剩餘高度) -->
+   <div class="toast-container" id="toastContainer"></div>
+  <main class="content-row">
+    <iframe id="mainIframe" src="about:blank" title="摸魚內容區"></iframe>
+    
+    <!-- 可移動與縮放的重疊區塊 -->
+    <div class="overlay-editor-section" id="overlayEditorSection">
+      <div class="overlay-header" id="overlayHeader">
+        <span>𓆛</span>
+        <span class="overlay-drag-hint">⋮⋮</span>
+      </div>
+      <div class="overlay-body" id="workspacePanelsRoot">
+        
+      </div>
+      <!-- 8 個方向的縮放觸發熱區 -->
+        <div class="resizer resizer-t" data-direction="t"></div>
+        <div class="resizer resizer-r" data-direction="r"></div>
+        <div class="resizer resizer-b" data-direction="b"></div>
+        <div class="resizer resizer-l" data-direction="l"></div>
+        <div class="resizer resizer-tl" data-direction="tl"></div>
+        <div class="resizer resizer-tr" data-direction="tr"></div>
+        <div class="resizer resizer-bl" data-direction="bl"></div>
+        <div class="resizer resizer-br" data-direction="br"></div>
+    </div>
+  </main>
+
+  <footer class="bottom-bar">
+    <div class="bottom-bar-left">
+      <!-- 🎨 主題調色按鈕 -->
+      <button type="button" class="bar-btn" id="btnThemeColor" title="調整佈局色彩"><!-- <svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/>
+        <path d="M12 21a3 3 0 0 0 3-3c0-.8-.3-1.5-.8-2a3 3 0 0 1 2.2-5H18a3 3 0 0 0 3-3"/>
+        <circle cx="7.5" cy="10.5" r=".5" fill="currentColor"/>
+        <circle cx="12" cy="7.5" r=".5" fill="currentColor"/>
+        <circle cx="16.5" cy="10.5" r=".5" fill="currentColor"/>
+        </svg> -->
+        🎨</button>
+
+      <!-- 指南按鈕 -->
+      <button type="button" class="bar-btn" id="btnNotes" title="指南"><svg class="line-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+
+      <!-- 📖 Readme 按鈕 -->
+      <button type="button" class="bar-btn" id="btnReadme" title="使用說明"><svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg></button>
+
+      <!-- func 功能選單按鈕 -->
+      <div class="dropdown-wrapper">
+        <button type="button" class="bar-btn" id="btnFuncTrigger" title="功能列表"><svg class="line-icon" viewBox="0 0 24 24">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg></button>
+        <div class="func-dropdown-menu" id="funcDropdownMenu">
+          <div class="menu-option active" data-mode="text"><svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg> 摸摸文</div>
+          <div class="menu-option" data-mode="draw"><svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+                  <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+                  <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                  <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.72 1.7-1.65 0-.43-.17-.83-.44-1.13-.27-.3-.43-.7-.43-1.14 0-.92.75-1.68 1.67-1.68H16c3.31 0 6-2.69 6-6 0-4.97-4.48-9-10-9z"></path>
+                  </svg> 摸摸圖</div>
+          <div class="menu-option" data-mode="web"><svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg> 看看檔</div>
+          <div class="menu-option" data-mode="markdown">
+              <div style="width: 14px; height: 14px; display: flex; vertical-align: middle;justify-content: center; pointer-events: none;">⤋</div>
+               標標記</div>  
+        </div>
+      </div>
+
+      <!-- CHANGE 按鈕 -->
+      <button type="button" class="bar-btn" id="changeBlockBtn" title="切換區塊">⇄</button>
+
+      <!-- OUTPUT 按鈕 -->
+      <button type="button" class="bar-btn output-btn" id="downloadOutputBtn" title="點擊儲存">⤓</button>
+      <button type="button" class="bar-btn" id="btnAutoSave" class="btnAutoSave" title="點擊儲存"><svg class="line-icon" id="autoSaveIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 11 12 14 22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+            <span id="autoSaveText">autoSave.check</span></button>
+      <!-- PDF 上傳 -->
+      <label class="file-upload-btn" title="上傳 PDF"><svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/>
+  <line x1="12" y1="3" x2="12" y2="15"/></svg> 上傳
+        <input type="file" id="pdfUploader" accept="application/pdf" hidden>
+      </label>
+    </div>
+    <div class="control-panel" style="margin-left: auto;display: flex;align-items: flex-start;">
+          <span class="panel-tab"  style="margin: 2px 5px;"id="wordCountInfo">Cnt: 0</span>
+          <input type="range" id="slapper-hide" name="slapper-hide" 
+            min="0" max="100" value="50">
+            <span class="panel-tab" style="margin: 2px;" id="opacity-value">50%</span>
+        </div>
+  </footer>
+
+  <!-- 🎨 調色盤面板 -->
+  <div class="color-picker-panel" id="colorPickerPanel">
+    <div class="panel-header">
+      <span>主題調色</span>
+      <span class="panel-close" id="btnCloseColorPicker">✖</span>
+    </div>
+    <div class="color-list-section" id="colorListSection">
+      <!-- 動態產生或預設列出調色項 -->
+    </div>
+    <div class="panel-action-bar">
+      <button type="button" id="btnResetColor">恢復預設</button>
+      <button type="button" id="btnSaveColor">調整</button>
+    </div>
+  </div>
+
+  <!-- 指南彈窗 (您提供的結構) -->
+  <div class="readme-modal" id="NotesModal">
+    <div class="readme-header">
+      <span style="display: flex; align-items: center; gap: 6px;">
+        <span id="NotesTitle">指南</span>
+      </span>
+      <span class="readme-close" id="btnCloseNotes">✕</span>
+    </div>
+    <div class="readme-body" id="NotesBody">
+      <ol>
+        <li>右側區塊為摸魚專區。</li>
+        <li>左側為偽裝程式編輯/log區，長官路過時可隨意打字，從結尾打字會是綠色(模仿註解)</li>
+        <li>點擊上方導覽列的搜尋框，可自行導入偽裝內容</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Readme 彈窗 (您提供的結構) -->
+  <div class="readme-modal" id="readmeModal">
+    <div class="readme-header">
+      <span style="display: flex; align-items: center; gap: 6px;">
+        <span id="readmeTitle">readme.md 使用說明</span>
+      </span>
+      <span class="readme-close" id="btnCloseReadme">✕</span>
+    </div>
+    <div class="readme-body" id="readmeBody">
+    </div>
+  </div>
+  <script src="../js/marked.umd.js"></script>
+  <script src="../js/00shared.js"></script>
+  <script src="../js/02app.js"></script>
+  <script src="../js/editor.js"></script>
+  <script src="../js/draw.js"></script>
+  <script src="../js/embed.js"></script>
+  <script src="../js/markdown.js"></script>
+</body>
+</html>

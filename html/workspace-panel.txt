@@ -1,0 +1,305 @@
+<!-- 模式 1：文 (Text Editor) -->
+<div class="workspace-panel mode-panel-text active" id="workspaceText">
+    <div class="editor-text-container">
+      <div class="text-backdrop" id="text-backdrop"><div id="text-highlights"></div></div>
+      <textarea class="overlay-textarea" id="realNovelInput" placeholder="請在此處輸入文本..."></textarea>
+    </div>
+    <!-- 工具列 -->
+  <div class="text-toolbar" id="text-toolbar">
+    <button id="backToTopBtn" title="返回頂部">▴</button>
+    <button id="backToBottomBtn" title="返回底部">▾</button>
+  
+    <!-- 1. 空按鈕獨立保留 -->
+    <button onclick="text_clearAll()"><svg class="line-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+    <!-- 2. 其他功能下拉選單 -->
+    <select id="text-actionMenu" onchange="text_handleMenuChange(this.value)">
+      <option value="" disabled selected>編輯</option>
+      <option value="removeEmpty">清除空行</option>
+      <option value="indent">增加縮排</option>
+      <option value="outdent">去除縮排</option>
+      <option value="showFind">尋找文字</option>
+      <option value="showReplace">取代文字</option>
+    </select>
+    <!-- 3. 複製全部按鈕獨立保留 -->
+    <button onclick="text_copyAll()"><svg class="line-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    <!-- 關閉高亮模式的快速按鈕 -->
+    <button id="text-closeHighlightBtn" style="display:none; background:var(--bg-overlay-editor); color:var(--text-main); border:none;" onclick="text_closeHighlightMode()">✖關閉</button>
+  </div>
+                  <!-- 尋找面板 (動態顯示) -->
+    <div class="text-panel" id="text-findPanel">
+      <strong>尋找：</strong>
+      <input type="text" id="text-findInput" placeholder="[tab]→Tab, [br]→換行" style="width: 300px;">
+    </div>
+
+    <!-- 取代面板 (動態顯示) -->
+    <div class="text-panel" id="text-replacePanel">
+      <strong>取代：</strong>
+      <input type="text" id="text-replaceTarget" placeholder="[tab]→Tab, [br]→換行">
+      <span>替換為</span>
+      <input type="text" id="text-replaceWith" placeholder="[tab]→Tab, [br]→換行">
+      <button onclick="text_executeReplace()" style="background:var(--text-main); color:var(--bg-overlay-editor); border:none;padding: 0px 5px;">確認</button>
+    </div>
+</div>
+
+<!-- 模式 2：圖 (Drawing Pad) -->
+<div class="workspace-panel mode-panel-draw" id="workspaceDraw">
+  <!-- Step 1: Canvas size picker -->
+  <div class="draw-size-picker" id="drawSizePicker">
+    <div class="draw-size-picker-box">
+      <h3>新建畫布</h3>
+      <label>寬度 (px)　<input type="number" id="canvasWidthInput" min="1" max="4000" value="800"></label>
+      <label>高度 (px)　<input type="number" id="canvasHeightInput" min="1" max="4000" value="600"></label>
+      <button id="btnCreateCanvas">確定</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Main drawing workspace -->
+  <div class="draw-main" id="drawMain" style="display:none;">
+
+    <!-- Toolbar -->
+    <div class="draw-toolbar" id="drawToolbar">
+      <button class="draw-tool-btn" id="toolImport" title="匯入圖片">
+        <svg class="line-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </button>
+      <input type="color" id="colorPicker" class="draw-color-picker" value="#000000" title="顏色">
+      <div class="draw-tool-group">
+        <button class="draw-tool-btn" id="toolBrush" title="畫筆">
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M9.06 11.9l8.27-8.27a1.5 1.5 0 0 1 2.12 2.12l-8.27 8.27"/><path d="M3 21c1-3 2-4 4-4a3 3 0 0 1 3 3c0 1-.5 2-1.5 2H3z"/></svg>
+        </button>
+        <input type="range" id="brushSizeSlider" min="1" max="500" value="10" title="畫筆尺寸">
+      </div>
+      <div class="draw-tool-group">
+        <button class="draw-tool-btn" id="toolEraser" title="橡皮擦">
+          <svg class="line-icon" viewBox="0 0 24 24"><path d="M20 20H7l-5-5a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l6 6a2 2 0 0 1 0 3l-9 9"/><line x1="6" y1="15" x2="11" y2="20"/></svg>
+        </button>
+        <input type="range" id="eraserSizeSlider" min="1" max="500" value="10" title="橡皮擦尺寸">
+      </div>
+      <button class="draw-tool-btn draw-tool-text-btn" id="btnClearLayer" title="清除當前圖層">清除</button>
+      <button class="draw-tool-btn" id="btnUndo" title="撤銷">
+        <svg class="line-icon" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>
+      </button>
+      <button class="draw-tool-btn" id="btnRedo" title="重作">
+        <svg class="line-icon" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg>
+      </button>
+      <button class="draw-tool-btn" id="toolText" title="文字">
+        <svg class="line-icon" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      </button>
+      <button class="draw-tool-btn" id="toolMove" title="移動與變形">
+        <svg class="line-icon" viewBox="0 0 24 24"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+      </button>
+      <button class="draw-tool-btn" id="toolSelect" title="選取">
+        <svg class="line-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1" stroke-dasharray="4 3"/></svg>
+      </button>
+      <button class="draw-tool-btn" id="toolEyedrop" title="吸色">
+        <svg class="line-icon" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2"/></svg>
+      </button>
+      <button class="draw-tool-btn" id="toolFilter" title="濾鏡">
+        <svg class="line-icon" viewBox="0 0 24 24"><path d="M4 20l11-11"/><path d="M13 8l2-2"/><path d="M17 3v2M17 7v2M15 5h2M19 5h2"/></svg>
+      </button>
+    </div>
+
+    <!-- Canvas area -->
+    <div class="draw-canvas-area" id="drawCanvasArea">
+      <div class="draw-canvas-viewport" id="drawCanvasViewport">
+        <div class="draw-canvas-stack" id="drawCanvasStack">
+          <canvas id="drawMainCanvas"></canvas>
+          <canvas id="drawOverlayCanvas"></canvas>
+        </div>
+            <button class="draw-zoom-reset-btn" id="btnZoomReset" title="縮放回100%">100%</button>
+      </div>
+
+      <!-- Floating: selection invert -->
+      <div class="draw-float-panel draw-select-panel" id="selectFloatMenu" style="display:none;">
+        <button id="btnInvertSelect">反選</button>
+      </div>
+
+      <!-- Floating: filter panel (draggable, position:fixed so it can leave workspaceDraw) -->
+          <div class="draw-float-panel draw-filter-panel" id="filterPanel" style="display:none;">
+            <div class="draw-filter-header" id="filterPanelHeader">濾鏡調整</div>
+            <label>色相
+              <input type="range" id="filterHue" class="filter-slider-hue" min="-180" max="180" value="0">
+            </label>
+            <label>明度
+              <input type="range" id="filterBrightness" class="filter-slider-brightness" min="-100" max="100" value="0">
+            </label>
+            <label>濃度
+              <div class="filter-slider-row"><span>低</span><input type="range" id="filterSaturation" min="-100" max="100" value="0"><span>高</span></div>
+            </label>
+            <label>對比度
+              <div class="filter-slider-row"><span>低</span><input type="range" id="filterContrast" min="-100" max="100" value="0"><span>高</span></div>
+            </label>
+            <div class="draw-filter-actions">
+              <button id="btnFilterConfirm">確認</button>
+              <button id="btnFilterCancel">取消</button>
+            </div>
+          </div>
+    </div>
+
+    <!-- Layers panel -->
+    <div class="draw-layers-panel" id="drawLayersPanel">
+      <div class="draw-layers-toolbar">
+        <button id="btnAddLayer" title="新增圖層">
+          <svg class="line-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button id="btnDeleteLayer" title="刪除圖層">
+          <svg class="line-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+        <button id="btnLayerUp" title="圖層上移">
+          <svg class="line-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button id="btnLayerDown" title="圖層下移">
+          <svg class="line-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="draw-layers-list" id="drawLayersList"></div>
+    </div>
+  </div>
+
+  <input type="file" id="drawImportInput" accept=".png,.jpg,.jpeg,.webp,.svg,image/*" style="display:none;">
+</div>
+
+<!-- 模式 3：嵌入 (Embed) -->
+<div class="workspace-panel mode-panel-web" id="workspaceWeb">
+  <!-- 功能列 -->
+  <div class="web-toolbar">
+    <select id="text-webSourceType" class="web-select">
+      <option value="url" selected>輸入網址</option>
+      <option value="file">上傳檔案</option>
+    </select>
+
+    <!-- 網址輸入框 -->
+    <input type="url" id="text-webUrlInput" class="web-input" placeholder="請輸入網址 (例如: https://example.com)..."/>
+
+    <!-- 檔案上傳框 (預設隱藏) -->
+    <input type="file" id="text-webFileInput" class="web-input" accept=".txt,.pdf" style="display: none;"/>
+
+    <button type="button" id="text-webConfirmBtn" class="web-btn">確定</button>
+  </div>
+
+  <!-- 內容列 -->
+  <div class="web-content" id="text-webContent">
+    <div class="web-placeholder">請選擇來源並點擊「確定」載入內容</div>
+  </div>
+</div>
+
+<!-- 模式 4： markdown -->
+<div class="workspace-panel mode-panel-markdown" id="workspaceMarkdown">
+  <!-- 頂列 -->
+  <div class="top-bar">
+    <label><input type="checkbox" id="autoSaveCheck"> 自動儲存</label>
+    <button class="top-btn" id="btnViewPreview">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>預覽
+    </button>
+    <button class="top-btn" id="btnViewCode">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>程式
+    </button>
+    <button class="top-btn" id="btnDownload"><svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <input type="file" id="fileInput" accept=".txt,.md" style="display: none;">
+    <button class="top-btn" id="btnUpload"><svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/>
+  <line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+  </div>
+
+  <!-- 內容列 -->
+  <div class="content-bar">
+    <!-- 預覽區塊 (左) -->
+    <div class="pane preview-pane" id="previewPane"></div>
+
+    <!-- 程式區塊 (右) -->
+    <div class="pane code-pane" id="codePane">
+      <div class="editor-container">
+        <div class="editor-highlight" id="editorHighlight"></div>
+        <textarea class="editor-textarea" id="editorTextarea" spellcheck="false"></textarea>
+      </div>
+
+      
+    </div>
+  </div>
+  <!-- 工具列區塊 (下) -->
+      <!-- 工具列區塊 (下) -->
+  <div class="toolbar">
+    <button class="tool-btn" id="btnUndo" title="撤銷 (Ctrl+Z)" disabled>
+      <svg class="line-icon" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>
+    </button>
+    <button class="tool-btn" id="btnRedo" title="重作 (Ctrl+Y)" disabled>
+      <svg class="line-icon" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg>
+    </button>
+    <div class="toolbar-divider"></div>
+
+    <button class="tool-btn" id="btnTab">Tab</button>
+    <button class="tool-btn" id="btnHeader">H</button>
+    <button class="tool-btn" id="btnBr">&lt;br&gt;</button>
+    <button class="tool-btn" id="btnList">⋮≡</button>
+    <button class="tool-btn" id="btnBold"><b>a</b></button>
+    <button class="tool-btn" id="btnItalic"><i>a</i></button>
+    <button class="tool-btn" id="btnStrike"><s>a</s></button>
+    <button class="tool-btn" id="btnCode">&lt;/&gt;</button>
+    <button class="tool-btn" id="btnLink">
+      <svg class="line-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+    </button>
+    <button class="tool-btn" id="btnImg">
+      <svg class="line-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </button>
+    <button class="tool-btn" id="btnQuote">引</button>
+    <button class="tool-btn" id="btnHr">─</button>
+    <div class="toolbar-divider"></div>
+          <!-- 選單功能 -->
+    <select class="toolbar-select" id="selectLineActions">
+      <option value="" disabled selected hidden>格式工具...</option>
+      <option value="clearEmpty">清除空行</option>
+      <option value="indent">增加縮排</option>
+      <option value="outdent">去除縮排</option>
+    </select>
+        <!-- 尋找面板與按鈕 -->
+    <div class="search-panel-wrapper">
+      <button class="tool-btn" id="btnFind" title="尋找">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div class="find-popover hidden" id="popoverFind">
+        <input type="text" id="findInput" placeholder="尋找內容...">
+        <button class="pop-btn" id="btnExecFind" title="搜尋">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <span class="count-span" id="findCountSpan">0/0</span>
+        <button class="pop-btn" id="btnFindPrev">⬆</button>
+        <button class="pop-btn" id="btnFindNext">⬇</button>
+        <button class="pop-btn" id="btnCloseFind">✖</button>
+      </div>
+    </div>
+
+    <!-- 取代面板與按鈕 -->
+    <div class="search-panel-wrapper">
+      <button class="tool-btn" id="btnReplace" title="取代">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="12" y="3" width="9" height="6" rx="1.5"/><rect x="3" y="15" width="9" height="6" rx="1.5"/><path d="M10 8H7a2 2 0 0 0-2 2v5"/><polyline points="2 12 5 15 8 12"/><path d="M14 16h3a2 2 0 0 0 2-2V9"/><polyline points="22 12 19 9 16 12"/></svg>
+      </button>
+      <div class="find-popover hidden" id="popoverReplace">
+        <input type="text" id="replaceFindInput" placeholder="原文字">
+        <span>取代為</span>
+        <input type="text" id="replaceWithInput" placeholder="新文字">
+        <button class="pop-btn" id="btnExecReplaceSearch" title="搜尋">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <span class="count-span" id="replaceCountSpan">0/0</span>
+        <button class="pop-btn" id="btnReplacePrev">⬆</button>
+        <button class="pop-btn" id="btnReplaceNext">⬇</button>
+        <button class="pop-btn" id="btnReplaceAll">全部取代</button>
+        <button class="pop-btn" id="btnCloseReplace">✖</button>
+      </div>
+    </div>
+
+    <div class="toolbar-divider"></div>
+    
+    <div class="toolbar-right">
+    <button class="tool-btn" id="btnGoTop" title="返回頂部">▲</button>
+    <button class="tool-btn" id="btnGoBottom" title="返回底部">▼</button>
+    <button class="tool-btn" id="btnCopyAll" title="複製全部"><svg class="line-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    <button class="tool-btn" id="btnClearAll" title="清空全部"><svg class="line-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+    <div class="toolbar-divider"></div>
+      <button class="tool-btn" id="btnTemplate">模板</button>
+    </div>
+  </div>
+</div>

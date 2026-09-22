@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown 編輯器</title>
+  <style>
+    :root {
+      --top-bg: #354f68;
+      --top-color: #ecf0f1;
+      --border-color: #ccc;
+      --toolbar-bg: #f8f9fa;
+      --btn-hover: #e2e6ea;
+      --syntax-symbol: #44a2d8; /* 深藍色語法符號 */
+      --font-mono: 'Consolas', 'Courier New', Monaco, 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+      /* background-color: #f4f6f8; */
+    }
+    ::-webkit-scrollbar {/*捲軸背景*/
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {/*捲軸拉霸之外的空間*/
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {/*捲軸拉霸*/
+      border-radius: 3px;
+      background: var(--syntax-symbol);
+    }
+    /* 頂列 */
+    .top-bar {
+      height: 30px;
+      width: 100%;
+      background-color: var(--top-bg);
+      color: var(--top-color);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 10px;
+      gap: 10px;
+      font-size: 12px;
+      z-index: 10;
+    }
+
+    .top-bar label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .top-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: var(--top-color);
+      height: 22px;
+      padding: 0 3px;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .top-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .top-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* 內容列 */
+    .content-bar {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 60px);
+      padding: 5px;
+      gap: 5px;
+      box-sizing: border-box;
+    }
+
+    .pane {
+      flex: 1;
+      height: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      width: 50%;
+    }
+
+    .pane.hidden {
+      display: none !important;
+    }
+
+    /* 預覽區塊 */
+    .preview-pane {
+      padding: 15px;
+      overflow-y: auto;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .preview-pane h1, .preview-pane h2, .preview-pane h3 {
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.3em;
+    }
+
+    .preview-pane p { margin-bottom: 1em; }
+    .preview-pane blockquote {
+      border-left: 4px solid #ddd;
+      padding-left: 10px;
+      color: #666;
+      margin: 1em 0;
+    }
+    .preview-pane code {
+      background: #f4f4f4;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+    }
+    .preview-pane pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      height: auto !important; 
+      overflow-y: visible !important;
+      flex-shrink: 0;        /* 防止在 Flex 容器中被壓扁 */
+      align-self: flex-start; /* 讓它依據自身內容決定高度，而不是跟隨父層高度拉伸 */
+      height: max-content;
+    }
+    .preview-pane pre code { padding: 0; display: block; }
+    .preview-pane ul, .preview-pane ol { padding-left: 20px; margin-bottom: 1em; }
+    .preview-pane img { max-width: 100%; }
+
+    /* 程式/編輯區塊 */
+    .code-pane {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+
+    /* 高亮層與輸入框重疊對齊 CSS */
+    .editor-textarea, .editor-highlight {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0 !important;
+      padding: 10px !important;
+      border: none !important;
+      outline: none !important;
+
+      font-family: var(--font-mono) !important;
+      font-size: 13.5px !important;
+      line-height: 1.5 !important;
+      letter-spacing: 0px !important;
+      word-spacing: 0px !important;
+      tab-size: 4 !important;
+      -moz-tab-size: 4 !important;
+
+      white-space: pre-wrap !important;
+      word-wrap: break-word !important;
+      word-break: break-all !important;
+      overflow-y: scroll !important;
+      box-sizing: border-box !important;
+
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .editor-highlight {
+      z-index: 1;
+      color: #333;
+      pointer-events: none;
+      background: transparent;
+    }
+
+    .editor-textarea {
+      z-index: 2;
+      color: transparent !important;
+      caret-color: #000;
+      background: transparent;
+      resize: none;
+    }
+
+    .editor-textarea::selection {
+      background-color: rgba(0, 120, 215, 0.3);
+      color: transparent;
+    }
+
+    /* 語法符號高亮 */
+    .sym {
+      color: var(--syntax-symbol);
+      font-weight: bold;
+    }
+
+    /* 工具列 */
+    .toolbar {
+      height: 30px;
+      min-height: 30px;
+      background-color: var(--toolbar-bg);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 5px;
+      gap: 3px;
+      overflow-x: auto;
+      white-space: nowrap;
+      position: relative;
+      z-index: 200; /* 確保工具列整體層級高於下方區域 */
+    }
+
+    .toolbar::-webkit-scrollbar {
+      height: 4px;
+    }
+    .toolbar::-webkit-scrollbar-thumb {
+      background: #ccc;
+    }
+
+    .tool-btn {
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #333;
+      flex-shrink: 0;
+    }
+
+    .tool-btn:hover:not(:disabled) {
+      background-color: var(--btn-hover);
+      border-color: #adadad;
+    }
+
+    .tool-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .tool-btn svg.line-icon {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 16px;
+      background-color: #ccc;
+      margin: 0 3px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* ====== 工具列新增樣式 ====== */
+    .toolbar-select {
+      height: 24px;
+      font-size: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background: #fff;
+      color: #333;
+      padding: 0 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    .toolbar-select:hover {
+      border-color: #adadad;
+    }
+
+    /* 尋找與取代高亮背景 */
+    mark.find-match {
+      background-color: #b3d7ff !important;
+      color: inherit;
+      border-radius: 2px;
+    }
+    mark.find-match.active {
+      background-color: #0078d4 !important;
+      color: #fff !important;
+    }
+
+    /* 彈出搜尋/取代面板容器 */
+    .search-panel-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .find-popover {
+      position: fixed; /* 關鍵修改：改為 fixed */
+      bottom: 36px;
+      left: 0;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 99999;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    .find-popover.hidden {
+      display: none !important;
+    }
+
+    .find-popover input[type="text"] {
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      font-size: 12px;
+      outline: none;
+      width: 110px;
+    }
+    .find-popover input[type="text"]:focus {
+      border-color: #44a2d8;
+    }
+
+    .find-popover .count-span {
+      font-size: 12px;
+      color: #666;
+      min-width: 45px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .find-popover .pop-btn {
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid var(--border-color);
+      background: #f8f9fa;
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #333;
+    }
+    .find-popover .pop-btn:hover {
+      background: var(--btn-hover);
+    }
+    /* ====== 2. Toast 提示訊息 ====== */
+.toast-container {
+  position: fixed;
+  bottom: 30px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-message {
+  background-color: var(--top-bg, #323233);
+  color: var(--text-main, #cccccc);
+  border: 1px solid var(--border-color, #454545);
+  border-left: 4px solid var(--syntax-symbol, #007acc);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+.toast-message.show { opacity: 1; transform: translateY(0); }
+
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+  <!-- 頂列 -->
+  <div class="top-bar">
+    <label><input type="checkbox" id="autoSaveCheck"> 自動儲存</label>
+    <button class="top-btn" id="btnViewPreview">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>預覽
+    </button>
+    <button class="top-btn" id="btnViewCode">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>程式
+    </button>
+    <button class="top-btn" id="btnDownload"><svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <input type="file" id="fileInput" accept=".txt,.md" style="display: none;">
+    <button class="top-btn" id="btnUpload"><svg class="line-icon" viewBox="0 0 24 24" style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/>
+  <line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+  </div>
+
+  <!-- 內容列 -->
+  <div class="content-bar">
+    <!-- 預覽區塊 (左) -->
+    <div class="pane preview-pane" id="previewPane"></div>
+
+    <!-- 程式區塊 (右) -->
+    <div class="pane code-pane" id="codePane">
+      <div class="editor-container">
+        <div class="editor-highlight" id="editorHighlight"></div>
+        <textarea class="editor-textarea" id="editorTextarea" spellcheck="false"></textarea>
+      </div>
+
+      
+    </div>
+  </div>
+  <!-- 工具列區塊 (下) -->
+      <!-- 工具列區塊 (下) -->
+  <div class="toolbar">
+    <button class="tool-btn" id="btnUndo" title="撤銷 (Ctrl+Z)" disabled>
+      <svg class="line-icon" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg>
+    </button>
+    <button class="tool-btn" id="btnRedo" title="重作 (Ctrl+Y)" disabled>
+      <svg class="line-icon" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg>
+    </button>
+    <div class="toolbar-divider"></div>
+
+    <button class="tool-btn" id="btnTab">Tab</button>
+    <button class="tool-btn" id="btnHeader">H</button>
+    <button class="tool-btn" id="btnBr">&lt;br&gt;</button>
+    <button class="tool-btn" id="btnList">⋮≡</button>
+    <button class="tool-btn" id="btnBold"><b>a</b></button>
+    <button class="tool-btn" id="btnItalic"><i>a</i></button>
+    <button class="tool-btn" id="btnStrike"><s>a</s></button>
+    <button class="tool-btn" id="btnCode">&lt;/&gt;</button>
+    <button class="tool-btn" id="btnLink">
+      <svg class="line-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+    </button>
+    <button class="tool-btn" id="btnImg">
+      <svg class="line-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </button>
+    <button class="tool-btn" id="btnQuote">引</button>
+    <button class="tool-btn" id="btnHr">─</button>
+    <div class="toolbar-divider"></div>
+          <!-- 選單功能 -->
+    <select class="toolbar-select" id="selectLineActions">
+      <option value="" disabled selected hidden>格式工具...</option>
+      <option value="clearEmpty">清除空行</option>
+      <option value="indent">增加縮排</option>
+      <option value="outdent">去除縮排</option>
+    </select>
+        <!-- 尋找面板與按鈕 -->
+    <div class="search-panel-wrapper">
+      <button class="tool-btn" id="btnFind" title="尋找">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div class="find-popover hidden" id="popoverFind">
+        <input type="text" id="findInput" placeholder="尋找內容...">
+        <button class="pop-btn" id="btnExecFind" title="搜尋">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <span class="count-span" id="findCountSpan">0/0</span>
+        <button class="pop-btn" id="btnFindPrev">⬆</button>
+        <button class="pop-btn" id="btnFindNext">⬇</button>
+        <button class="pop-btn" id="btnCloseFind">✖</button>
+      </div>
+    </div>
+
+    <!-- 取代面板與按鈕 -->
+    <div class="search-panel-wrapper">
+      <button class="tool-btn" id="btnReplace" title="取代">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="12" y="3" width="9" height="6" rx="1.5"/><rect x="3" y="15" width="9" height="6" rx="1.5"/><path d="M10 8H7a2 2 0 0 0-2 2v5"/><polyline points="2 12 5 15 8 12"/><path d="M14 16h3a2 2 0 0 0 2-2V9"/><polyline points="22 12 19 9 16 12"/></svg>
+      </button>
+      <div class="find-popover hidden" id="popoverReplace">
+        <input type="text" id="replaceFindInput" placeholder="原文字">
+        <span>取代為</span>
+        <input type="text" id="replaceWithInput" placeholder="新文字">
+        <button class="pop-btn" id="btnExecReplaceSearch" title="搜尋">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <span class="count-span" id="replaceCountSpan">0/0</span>
+        <button class="pop-btn" id="btnReplacePrev">⬆</button>
+        <button class="pop-btn" id="btnReplaceNext">⬇</button>
+        <button class="pop-btn" id="btnReplaceAll">全部取代</button>
+        <button class="pop-btn" id="btnCloseReplace">✖</button>
+      </div>
+    </div>
+
+    <div class="toolbar-divider"></div>
+    
+    <div class="toolbar-right">
+    <button class="tool-btn" id="btnGoTop" title="返回頂部">▲</button>
+    <button class="tool-btn" id="btnGoBottom" title="返回底部">▼</button>
+    <button class="tool-btn" id="btnCopyAll" title="複製全部"><svg class="line-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    <button class="tool-btn" id="btnClearAll" title="清空全部"><svg class="line-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+    <div class="toolbar-divider"></div>
+      <button class="tool-btn" id="btnTemplate">模板</button>
+    </div>
+  </div>
+<script src="../js/marked.umd.js"></script>
+<script>
+  // SVG 圖示常量
+const EYE_OPEN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_CLOSED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 20c-7 0-11-8-11-8a21.6 21.6 0 0 1 5-6M9.9 4.2A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a21.6 21.6 0 0 1-2.2 3.2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+// 預設 MD 範本內容
+const DEFAULT_TEMPLATE = `# 歡迎使用 Markdown 編輯器
+
+這是一個支援實時預覽與語法高亮顯示的編輯器。
+
+## 功能特色
+- **即時預覽** 與 *雙向滾動同步*
+- 語法自動高亮顏色顯示
+- 智慧 Tab 自動縮排與清單自動續行
+- 工具列豐富按鈕支援
+- **粗體** 與 _斜體_ 文字
+- ~~刪除線~~ 與 \`行內程式碼\`
+- 自動清單項目：
+  - 項目 1
+  - 項目 2
+
+\`\`\`javascript
+// 程式碼區塊範例
+function sayHello() {
+  console.log("Hello, Markdown World!");
+}
+\`\`\`
+
+> 這是一段引用文字
+> 可以在此撰寫備註
+---
+![替代文字](https://dummyimage.com/600x200/0f2b48/ffffff?text=Markdown+Editor)
+---
+
+可以在下方繼續編輯內容...
+`;
+
+// 歷史紀錄 Stack (最多 20 次)
+const historyStack = [];
+let historyIndex = -1;
+const MAX_HISTORY = 20;
+
+// DOM 元素引用
+const textarea = document.getElementById('editorTextarea');
+const highlightDiv = document.getElementById('editorHighlight');
+const previewPane = document.getElementById('previewPane');
+const codePane = document.getElementById('codePane');
+const autoSaveCheck = document.getElementById('autoSaveCheck');
+const btnUndo = document.getElementById('btnUndo');
+const btnRedo = document.getElementById('btnRedo');
+
+// HTML 轉義
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+// 標準插入文字與更新游標位置函式（取代 execCommand）
+function insertTextAtCursor(el, textToInsert) {
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const val = el.value;
+
+  // 切割並插入文字
+  el.value = val.substring(0, start) + textToInsert + val.substring(end);
+
+  // 將游標移至插入內容的後方
+  el.selectionStart = el.selectionEnd = start + textToInsert.length;
+}
+
+// Markdown 語法符號高亮邏輯（僅高亮符號本身）
+// Markdown 語法符號高亮邏輯（僅高亮符號本身 + 支援尋找高亮）
+function applySyntaxHighlighting(text) {
+  let escaped = escapeHtml(text);
+
+  // 如果正在搜尋，先進行尋找字串高亮標記
+  if (currentSearchState.active && currentSearchState.keyword) {
+    const rawKeyword = currentSearchState.keyword;
+    const matches = getSearchMatches(text, rawKeyword);
+    currentSearchState.matches = matches;
+
+    if (matches.length > 0) {
+      if (currentSearchState.currentIndex >= matches.length) {
+        currentSearchState.currentIndex = 0;
+      } else if (currentSearchState.currentIndex < 0) {
+        currentSearchState.currentIndex = matches.length - 1;
+      }
+
+      // 由後往前替換高亮標記，避免 index 偏移
+      let result = text;
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const m = matches[i];
+        const isActive = (i === currentSearchState.currentIndex);
+        const cls = isActive ? 'find-match active' : 'find-match';
+        const targetText = text.substring(m.start, m.end);
+        
+        const before = result.substring(0, m.start);
+        const after = result.substring(m.end);
+        result = before + `___SEARCH_MATCH_${i}_${isActive ? 1 : 0}___` + targetText + `___SEARCH_END___` + after;
+      }
+
+      escaped = escapeHtml(result);
+
+      // 將佔位符轉回 mark 標籤
+      matches.forEach((m, i) => {
+        const isActive = (i === currentSearchState.currentIndex);
+        const cls = isActive ? 'find-match active' : 'find-match';
+        const startTag = `___SEARCH_MATCH_${i}_${isActive ? 1 : 0}___`;
+        const endTag = `___SEARCH_END___`;
+        escaped = escaped.replace(startTag, `<mark class="${cls}">`).replace(endTag, `</mark>`);
+      });
+    }
+  }
+
+  // 行首語法 (標題, 清單, 引用, 分隔線, Tab)
+  escaped = escaped.replace(/^(\t+)/gm, '<span class="sym">$1</span>');
+  escaped = escaped.replace(/^((?:&lt;span class="sym"&gt;.*?&lt;\/span&gt;|\t)*)(#+\s)/gm, '$1<span class="sym">$2</span>');
+  escaped = escaped.replace(/^((?:&lt;span class="sym"&gt;.*?&lt;\/span&gt;|\t)*)(-\s)/gm, '$1<span class="sym">$2</span>');
+  escaped = escaped.replace(/^((?:&lt;span class="sym"&gt;.*?&lt;\/span&gt;|\t)*)(&gt;\s)/gm, '$1<span class="sym">$2</span>');
+  escaped = escaped.replace(/^((?:&lt;span class="sym"&gt;.*?&lt;\/span&gt;|\t)*)(---)/gm, '$1<span class="sym">$2</span>');
+
+  // 行內語法
+  escaped = escaped.replace(/(&lt;br&gt;)/g, '<span class="sym">$1</span>');
+  escaped = escaped.replace(/(\*\*)/g, '<span class="sym">$1</span>');
+  escaped = escaped.replace(/(_)/g, '<span class="sym">$1</span>');
+  escaped = escaped.replace(/(~~)/g, '<span class="sym">$1</span>');
+  escaped = escaped.replace(/(`{1,3})/g, '<span class="sym">$1</span>');
+  
+  // 連結與圖片標籤符號
+  escaped = escaped.replace(/(!?\[)(.*?)(\]\()(.*?)(\))/g, '<span class="sym">$1</span>$2<span class="sym">$3</span>$4<span class="sym">$5</span>');
+
+  // 末尾換行處理
+  if (text.endsWith('\n')) {
+    escaped += '<br>&nbsp;';
+  }
+
+  return escaped;
+}
+// 更新高亮視圖
+function updateHighlight() {
+  highlightDiv.innerHTML = applySyntaxHighlighting(textarea.value);
+}
+
+// 歷史紀錄管理 (Undo/Redo)
+function saveHistory() {
+  const val = textarea.value;
+  if (historyStack.length > 0 && historyStack[historyIndex] === val) return;
+
+  if (historyIndex < historyStack.length - 1) {
+    historyStack.splice(historyIndex + 1);
+  }
+
+  historyStack.push(val);
+  if (historyStack.length > MAX_HISTORY) {
+    historyStack.shift();
+  } else {
+    historyIndex++;
+  }
+  updateHistoryButtons();
+  handleAutoSave();
+}
+
+function updateHistoryButtons() {
+  btnUndo.disabled = historyIndex <= 0;
+  btnRedo.disabled = historyIndex >= historyStack.length - 1;
+}
+
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    textarea.value = historyStack[historyIndex];
+    updateHighlight();
+    renderMarkdown();
+    updateHistoryButtons();
+    handleAutoSave();
+    window.showToast('已撤銷');
+  }
+}
+
+function redo() {
+  if (historyIndex < historyStack.length - 1) {
+    historyIndex++;
+    textarea.value = historyStack[historyIndex];
+    updateHighlight();
+    renderMarkdown();
+    updateHistoryButtons();
+    handleAutoSave();
+    window.showToast('已重作');
+  }
+}
+
+// Markdown Parser
+function renderMarkdown() {
+  const src = textarea.value;
+  previewPane.innerHTML = marked.parse(src);
+}
+
+// 自動儲存至 LocalStorage
+function handleAutoSave() {
+  if (autoSaveCheck.checked) {
+    localStorage.setItem("Slapper_md", textarea.value);
+  }
+}
+
+autoSaveCheck.addEventListener('change', () => {
+  if (autoSaveCheck.checked) {
+    localStorage.setItem("Slapper_md", textarea.value);
+    window.showToast('開啟自動儲存');
+  } else {
+    localStorage.removeItem("Slapper_md");
+    window.showToast('取消自動儲存');
+  }
+});
+
+// 下載檔案機制 (檔名優先採第一個 # 標題)
+document.getElementById('btnDownload').addEventListener('click', () => {
+  const text = textarea.value;
+  const match = text.match(/^#\s+(.+)$/m);
+  let filename = "document.md";
+  if (match && match[1].trim()) {
+    filename = match[1].trim().replace(/[\\/:*?"<>|]/g, "_") + ".md";
+  }
+
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  window.showToast('下載成功');
+});
+// 點擊上傳按鈕時，觸發隱藏的 file input
+document.getElementById('btnUpload').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+// 當選擇檔案時讀取內容
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    textarea.value = evt.target.result;
+    
+    // 更新高亮、預覽與歷史紀錄
+    updateHighlight();
+    renderMarkdown();
+    saveHistory();
+    
+    window.showToast('檔案載入成功');
+    // 清空 input 讓重複選擇同一個檔案時也能觸發 change 事件
+    e.target.value = '';
+  };
+  
+  reader.onerror = () => {
+    window.showToast('檔案讀取失敗');
+  };
+
+  reader.readAsText(file, 'UTF-8');
+});
+// 快捷鍵機制
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      undo();
+    } else if (e.key.toLowerCase() === 'y') {
+      e.preventDefault();
+      redo();
+    } else if (e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      document.getElementById('btnDownload').click();
+    }
+  }
+});
+
+// 捲動同步（程式碼 <-> 預覽, 高亮區塊）
+let isTextareaScrolling = false;
+let isPreviewScrolling = false;
+
+textarea.addEventListener('scroll', () => {
+  highlightDiv.scrollTop = textarea.scrollTop;
+  highlightDiv.scrollLeft = textarea.scrollLeft;
+
+  if (isPreviewScrolling) return;
+  isTextareaScrolling = true;
+
+  const percentage = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight);
+  if (!isNaN(percentage)) {
+    previewPane.scrollTop = percentage * (previewPane.scrollHeight - previewPane.clientHeight);
+  }
+
+  setTimeout(() => { isTextareaScrolling = false; }, 50);
+});
+
+previewPane.addEventListener('scroll', () => {
+  if (isTextareaScrolling) return;
+  isPreviewScrolling = true;
+
+  const percentage = previewPane.scrollTop / (previewPane.scrollHeight - previewPane.clientHeight);
+  if (!isNaN(percentage)) {
+    textarea.scrollTop = percentage * (textarea.scrollHeight - textarea.clientHeight);
+    highlightDiv.scrollTop = textarea.scrollTop;
+  }
+
+  setTimeout(() => { isPreviewScrolling = false; }, 50);
+});
+
+// 自動換行與 Enter 延續格式邏輯
+textarea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const lastNewLine = text.lastIndexOf('\n', start - 1);
+    const currentLine = text.substring(lastNewLine + 1, start);
+
+    const tabMatch = currentLine.match(/^(\t+)/);
+    const indent = tabMatch ? tabMatch[1] : '';
+
+    const listMatch = currentLine.match(/^((\t*)-\s)/);
+
+    if (listMatch) {
+      e.preventDefault();
+      const listPrefix = listMatch[1];
+      if (currentLine.trim() === '-') {
+        const newText = text.substring(0, lastNewLine + 1) + text.substring(start);
+        textarea.value = newText;
+        textarea.selectionStart = textarea.selectionEnd = lastNewLine + 1;
+      } else {
+        const insertText = '\n' + listPrefix;
+        insertTextAtCursor(textarea, insertText);
+      }
+      triggerInputEvent();
+    } else if (indent) {
+      e.preventDefault();
+      const insertText = '\n' + indent;
+      insertTextAtCursor(textarea, insertText);
+      triggerInputEvent();
+    }
+  }
+});
+
+function triggerInputEvent() {
+  if (currentSearchState.active) {
+    performSearch(currentSearchState.keyword, false);
+  } else {
+    updateHighlight();
+  }
+  renderMarkdown();
+  saveHistory();
+}
+
+textarea.addEventListener('input', () => {
+  triggerInputEvent();
+});
+
+textarea.addEventListener('input', () => {
+  updateHighlight();
+  renderMarkdown();
+  saveHistory();
+});
+
+// 工具列按鈕動作處理（修復焦點遺失問題）
+function applyToolbarAction(actionFn) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const hasSelection = start !== end;
+
+  actionFn(start, end, text, hasSelection);
+  updateHighlight();
+  renderMarkdown();
+  saveHistory();
+  textarea.focus();
+}
+
+// 阻止工具列按鈕搶走焦點
+document.querySelectorAll('.tool-btn').forEach(btn => {
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+  });
+});
+
+// 工具按鈕事件綁定
+document.getElementById('btnTab').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    modifyLines(start, end, text, line => line.startsWith('\t') ? line.substring(1) : '\t' + line);
+  } else {
+    insertAtCursor(start, end, text, '\t');
+  }
+});
+
+document.getElementById('btnHeader').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    modifyLines(start, end, text, line => line.startsWith('# ') ? line.substring(2) : '# ' + line);
+  } else {
+    insertAtCursor(start, end, text, '# ');
+  }
+});
+
+document.getElementById('btnBr').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    modifyLines(start, end, text, line => line.endsWith('<br>') ? line.slice(0, -4) : line + '<br>');
+  } else {
+    insertAtCursor(start, end, text, '<br>');
+  }
+});
+
+document.getElementById('btnList').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    modifyLines(start, end, text, line => line.startsWith('- ') ? line.substring(2) : '- ' + line);
+  } else {
+    insertAtCursor(start, end, text, '- ');
+  }
+});
+
+document.getElementById('btnBold').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  toggleWrap(start, end, text, '**', '**粗體**');
+});
+
+document.getElementById('btnItalic').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  toggleWrap(start, end, text, '_', '_斜體_');
+});
+
+document.getElementById('btnStrike').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  toggleWrap(start, end, text, '~~', '~~刪除線~~');
+});
+
+document.getElementById('btnCode').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    const sel = text.substring(start, end);
+    if (sel.includes('\n')) {
+      if (sel.startsWith('```\n') && sel.endsWith('\n```')) {
+        textarea.value = text.substring(0, start) + sel.substring(4, sel.length - 4) + text.substring(end);
+      } else {
+        textarea.value = text.substring(0, start) + '```\n' + sel + '\n```' + text.substring(end);
+      }
+    } else {
+      toggleWrap(start, end, text, '`', '`行內程式碼`');
+    }
+  } else {
+    insertAtCursor(start, end, text, '`行內程式碼`');
+  }
+});
+
+document.getElementById('btnLink').onclick = () => applyToolbarAction((start, end, text) => {
+  insertAtCursor(start, end, text, '[顯示文字](網址)');
+});
+
+document.getElementById('btnImg').onclick = () => applyToolbarAction((start, end, text) => {
+  insertAtCursor(start, end, text, '![替代文字](圖片網址)');
+});
+
+document.getElementById('btnQuote').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    modifyLines(start, end, text, line => line.startsWith('> ') ? line.substring(2) : '> ' + line);
+  } else {
+    insertAtCursor(start, end, text, '> ');
+  }
+});
+
+document.getElementById('btnHr').onclick = () => applyToolbarAction((start, end, text, hasSelection) => {
+  if (hasSelection) {
+    const lines = text.substring(start, end).split('\n');
+    textarea.value = text.substring(0, start) + lines.join('\n---\n') + text.substring(end);
+  } else {
+    insertAtCursor(start, end, text, '---');
+  }
+});
+
+function insertAtCursor(start, end, text, str) {
+  textarea.value = text.substring(0, start) + str + text.substring(end);
+  textarea.selectionStart = textarea.selectionEnd = start + str.length;
+}
+
+function toggleWrap(start, end, text, symbol, defaultText) {
+  if (start !== end) {
+    modifyLines(start, end, text, line => {
+      if (line.startsWith(symbol) && line.endsWith(symbol)) {
+        return line.substring(symbol.length, line.length - symbol.length);
+      }
+      return symbol + line + symbol;
+    });
+  } else {
+    insertAtCursor(start, end, text, defaultText);
+  }
+}
+
+function modifyLines(start, end, text, transformFn) {
+  const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  let lineEnd = text.indexOf('\n', end);
+  if (lineEnd === -1) lineEnd = text.length;
+
+  const lines = text.substring(lineStart, lineEnd).split('\n');
+  const modified = lines.map(transformFn).join('\n');
+
+  textarea.value = text.substring(0, lineStart) + modified + text.substring(lineEnd);
+  textarea.selectionStart = lineStart;
+  textarea.selectionEnd = lineStart + modified.length;
+}
+
+// 撤銷 / 重作按鈕事件
+btnUndo.onclick = undo;
+btnRedo.onclick = redo;
+
+// 模板按鈕點擊
+document.getElementById('btnTemplate').onclick = () => {
+  textarea.value = DEFAULT_TEMPLATE;
+  updateHighlight();
+  renderMarkdown();
+  saveHistory();
+  textarea.focus();
+  window.showToast('載入模板完成');
+};
+
+// 頂列切換視圖按鈕邏輯 (獨立切換與眼睛圖示更新)
+const btnViewPreview = document.getElementById('btnViewPreview');
+const btnViewCode = document.getElementById('btnViewCode');
+
+btnViewPreview.onclick = () => {
+  const isHidden = previewPane.classList.toggle('hidden');
+  const iconSpan = btnViewPreview.querySelector('.btn-icon');
+  iconSpan.innerHTML = isHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
+};
+
+btnViewCode.onclick = () => {
+  const isHidden = codePane.classList.toggle('hidden');
+  const iconSpan = btnViewCode.querySelector('.btn-icon');
+  iconSpan.innerHTML = isHidden ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
+};
+window.showToast = function (message) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    console.log("showToast");
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      toast.addEventListener('transitionend', () => toast.remove());
+    }, 2500);
+  };
+// ====== 尋找 & 取代 全局狀態與邏輯 ======
+const currentSearchState = {
+  active: false,
+  keyword: '',
+  matches: [],
+  currentIndex: 0
+};
+
+// 解析 [tab] 與 [br] 特殊字元
+function parseSearchQuery(query) {
+  return query.replace(/\[tab\]/gi, '\t').replace(/\[br\]/gi, '\n');
+}
+
+// 取得所有匹配位置
+function getSearchMatches(text, rawQuery) {
+  if (!rawQuery) return [];
+  const parsed = parseSearchQuery(rawQuery);
+  if (!parsed) return [];
+
+  const matches = [];
+  let pos = text.indexOf(parsed);
+  while (pos !== -1) {
+    matches.push({ start: pos, end: pos + parsed.length });
+    pos = text.indexOf(parsed, pos + 1);
+  }
+  return matches;
+}
+
+// 執行尋找並跳轉
+function performSearch(rawQuery, jumpToNearest = true) {
+  if (!rawQuery) {
+    currentSearchState.active = false;
+    currentSearchState.keyword = '';
+    currentSearchState.matches = [];
+    currentSearchState.currentIndex = 0;
+    updateSearchUI(0, 0);
+    updateHighlight();
+    return;
+  }
+
+  currentSearchState.active = true;
+  currentSearchState.keyword = rawQuery;
+
+  const matches = getSearchMatches(textarea.value, rawQuery);
+  currentSearchState.matches = matches;
+
+  if (matches.length === 0) {
+    currentSearchState.currentIndex = -1;
+    updateSearchUI(0, 0);
+    updateHighlight();
+    return;
+  }
+
+  // 尋找距離目前游標最近的匹配項
+  if (jumpToNearest) {
+    const cursorPos = textarea.selectionStart;
+    let nearestIdx = 0;
+    let minDiff = Infinity;
+
+    matches.forEach((m, idx) => {
+      const diff = Math.abs(m.start - cursorPos);
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearestIdx = idx;
+      }
+    });
+    currentSearchState.currentIndex = nearestIdx;
+  }
+
+  updateSearchUI(currentSearchState.currentIndex + 1, matches.length);
+  updateHighlight();
+  jumpToMatch(currentSearchState.currentIndex);
+}
+
+// 跳轉文字游標與滾動視圖
+function jumpToMatch(index) {
+  const matches = currentSearchState.matches;
+  if (index < 0 || index >= matches.length) return;
+
+  const match = matches[index];
+  textarea.focus();
+  textarea.setSelectionRange(match.start, match.end);
+
+  // 滾動讓游標可見
+  const textBefore = textarea.value.substring(0, match.start);
+  const lineCount = textBefore.split('\n').length;
+  const totalLines = textarea.value.split('\n').length || 1;
+  const scrollRatio = lineCount / totalLines;
+  
+  textarea.scrollTop = scrollRatio * (textarea.scrollHeight - textarea.clientHeight);
+}
+
+// 更新記數 Span
+function updateSearchUI(current, total) {
+  const text = total > 0 ? `${current}/${total}` : '0/0';
+  document.getElementById('findCountSpan').textContent = text;
+  document.getElementById('replaceCountSpan').textContent = text;
+}
+
+// 取消搜尋
+function cancelSearch() {
+  currentSearchState.active = false;
+  currentSearchState.keyword = '';
+  currentSearchState.matches = [];
+  currentSearchState.currentIndex = 0;
+  
+  document.getElementById('popoverFind').classList.add('hidden');
+  document.getElementById('popoverReplace').classList.add('hidden');
+  
+  updateHighlight();
+  textarea.focus();
+}
+
+// 面板開關事件
+const popoverFind = document.getElementById('popoverFind');
+const popoverReplace = document.getElementById('popoverReplace');
+
+document.getElementById('btnFind').onclick = () => {
+  popoverReplace.classList.add('hidden');
+  popoverFind.classList.toggle('hidden');
+  if (!popoverFind.classList.contains('hidden')) {
+    const input = document.getElementById('findInput');
+    input.focus();
+    if (input.value) performSearch(input.value);
+  } else {
+    cancelSearch();
+  }
+};
+
+document.getElementById('btnReplace').onclick = () => {
+  popoverFind.classList.add('hidden');
+  popoverReplace.classList.toggle('hidden');
+  if (!popoverReplace.classList.contains('hidden')) {
+    const input = document.getElementById('replaceFindInput');
+    input.focus();
+    if (input.value) performSearch(input.value);
+  } else {
+    cancelSearch();
+  }
+};
+
+// 尋找面板操作
+document.getElementById('btnExecFind').onclick = () => {
+  performSearch(document.getElementById('findInput').value);
+};
+document.getElementById('findInput').onkeydown = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    performSearch(document.getElementById('findInput').value);
+  }
+};
+
+// 取代面板操作
+document.getElementById('btnExecReplaceSearch').onclick = () => {
+  performSearch(document.getElementById('replaceFindInput').value);
+};
+document.getElementById('replaceFindInput').onkeydown = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    performSearch(document.getElementById('replaceFindInput').value);
+  }
+};
+
+// 上一個 / 下一個
+function navigateMatch(dir) {
+  const matches = currentSearchState.matches;
+  if (matches.length === 0) return;
+
+  currentSearchState.currentIndex += dir;
+  if (currentSearchState.currentIndex >= matches.length) {
+    currentSearchState.currentIndex = 0;
+  } else if (currentSearchState.currentIndex < 0) {
+    currentSearchState.currentIndex = matches.length - 1;
+  }
+
+  updateSearchUI(currentSearchState.currentIndex + 1, matches.length);
+  updateHighlight();
+  jumpToMatch(currentSearchState.currentIndex);
+}
+
+document.getElementById('btnFindPrev').onclick = () => navigateMatch(-1);
+document.getElementById('btnFindNext').onclick = () => navigateMatch(1);
+document.getElementById('btnReplacePrev').onclick = () => navigateMatch(-1);
+document.getElementById('btnReplaceNext').onclick = () => navigateMatch(1);
+
+document.getElementById('btnCloseFind').onclick = cancelSearch;
+document.getElementById('btnCloseReplace').onclick = cancelSearch;
+
+// 全部取代
+document.getElementById('btnReplaceAll').onclick = () => {
+  const rawTarget = document.getElementById('replaceFindInput').value;
+  const rawReplace = document.getElementById('replaceWithInput').value;
+
+  if (!rawTarget) return;
+
+  const target = parseSearchQuery(rawTarget);
+  const replaceStr = parseSearchQuery(rawReplace);
+
+  const currentText = textarea.value;
+  if (!currentText.includes(target)) {
+    window.showToast('未找到可取代內容');
+    return;
+  }
+
+  const newText = currentText.split(target).join(replaceStr);
+  textarea.value = newText;
+  
+  window.showToast('全部取代完成');
+  performSearch(rawTarget, false);
+  triggerInputEvent();
+};
+
+// ====== 快捷格式工具 (清除空行, 增加/縮減縮排) ======
+document.getElementById('selectLineActions').onchange = (e) => {
+  const action = e.target.value;
+  if (!action) return;
+
+  const text = textarea.value;
+  const lines = text.split('\n');
+
+  if (action === 'clearEmpty') {
+    const newLines = lines.filter(line => line.trim() !== '');
+    textarea.value = newLines.join('\n');
+    window.showToast('已清除空行');
+  } else if (action === 'indent') {
+    const newLines = lines.map(line => '\t' + line);
+    textarea.value = newLines.join('\n');
+    window.showToast('已增加縮排');
+  } else if (action === 'outdent') {
+    const newLines = lines.map(line => line.startsWith('\t') ? line.substring(1) : line);
+    textarea.value = newLines.join('\n');
+    window.showToast('已減少縮排');
+  }
+
+  e.target.value = ''; // 重置選單
+  triggerInputEvent();
+  textarea.focus();
+};
+
+// ====== 複製全部、清空全部、頂部/底部導航 ======
+document.getElementById('btnCopyAll').onclick = () => {
+  if (!textarea.value) {
+    window.showToast('內容為空');
+    return;
+  }
+  navigator.clipboard.writeText(textarea.value).then(() => {
+    window.showToast('已複製全部內容');
+  }).catch(() => {
+    window.showToast('複製失敗');
+  });
+};
+
+document.getElementById('btnClearAll').onclick = () => {
+  if (confirm('確定要清空全部內容嗎？')) {
+    textarea.value = '';
+    triggerInputEvent();
+    window.showToast('已清空內容');
+  }
+};
+
+document.getElementById('btnGoTop').onclick = () => {
+  textarea.focus();
+  textarea.setSelectionRange(0, 0);
+  textarea.scrollTop = 0;
+};
+
+document.getElementById('btnGoBottom').onclick = () => {
+  textarea.focus();
+  const len = textarea.value.length;
+  textarea.setSelectionRange(len, len);
+  textarea.scrollTop = textarea.scrollHeight;
+};
+
+// 初始化
+function init() {
+  const saved = localStorage.getItem("Slapper_md");
+  if (saved) {
+    if (confirm("檢測到儲存的 Slapper_md 內容，是否載入？")) {
+      textarea.value = saved;
+      autoSaveCheck.checked = true;
+    } else {
+      localStorage.removeItem("Slapper_md");
+      textarea.value = DEFAULT_TEMPLATE;
+    }
+  } else {
+    textarea.value = DEFAULT_TEMPLATE;
+  }
+
+  updateHighlight();
+  renderMarkdown();
+  saveHistory();
+}
+
+init();
+</script>
+
+</body>
+</html>
