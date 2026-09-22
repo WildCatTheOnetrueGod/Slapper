@@ -1,0 +1,173 @@
+/* ======================================================
+   00shared.css
+   01.html / 02.html 共用的基礎樣式
+   - reset
+   - body 版面骨架 (背景色由各頁自行指定)
+   - line-icon
+   - toast 提示
+   - readme / 指南 modal
+   - func 下拉選單
+   - overlay-editor-section 的「非定位」共用樣式
+   注意：所有顏色一律吃 CSS variable，實際數值由 01.css / 02.css 的 :root 各自提供。
+   ====================================================== */
+
+/* ====== 1. Reset & body 骨架 ====== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  color: var(--text-main);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  /* background-color 由各頁 01.css / 02.css 自行指定 (var(--bg-editor) 或 var(--bg-main)) */
+}
+
+.line-icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  display: inline-block;
+  vertical-align: middle;
+  pointer-events: none;
+}
+
+/* ====== 2. Toast 提示訊息 ====== */
+.toast-container {
+  position: fixed;
+  bottom: 30px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-message {
+  background-color: var(--bg-sidebar, #323233);
+  color: var(--text-main, #cccccc);
+  border: 1px solid var(--border-color, #454545);
+  border-left: 4px solid var(--border-active, #007acc);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+.toast-message.show { opacity: 1; transform: translateY(0); }
+
+/* 給 01editor.js 用的另一種 toast class (.toast-msg，帶圖示) */
+.toast-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-sidebar, #323233);
+  color: var(--text-main, #cccccc);
+  border: 1px solid var(--border-color, #454545);
+  border-left: 4px solid var(--border-active, #007acc);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+.toast-msg.show { opacity: 1; transform: translateY(0); }
+
+/* ====== 3. Readme / 指南 Modal ====== */
+.readme-modal {
+  position: absolute;
+  top: 50px; left: 50%; transform: translateX(-50%);
+  width: 400px;
+  border-radius: 6px;
+  z-index: 999;
+  display: none;
+}
+.readme-modal.show { display: block; }
+.readme-header { padding: 10px 14px;  display: flex; justify-content: space-between; font-weight: bold; }
+.readme-body { padding: 14px; line-height: 1.6; max-height: 60vh; overflow-y: auto; }
+.readme-body ol { padding-left: 20px; }
+.readme-close { cursor: pointer; }
+
+/* ====== 4. func 下拉選單 ====== */
+.func-dropdown-menu {
+  display: none;
+  position: absolute !important;
+  width: 160px !important;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  z-index: 100;
+  padding: 4px 0;
+}
+.func-dropdown-menu.show { display: block !important; }
+.func-dropdown-menu .menu-option {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-main);
+  transition: background 0.15s;
+  display: flex;
+}
+.func-dropdown-menu .menu-option:hover { background-color: var(--row-hover-bg); }
+.func-dropdown-menu .menu-option.active {
+  font-weight: bold;
+  color: var(--border-active);
+  background-color: var(--tree-active-bg);
+}
+
+/* ====== 5. panel-tab 通用樣式 (底部功能列按鈕共用的文字/游標樣式) ====== */
+.panel-tab { font-size: 11px; text-transform: uppercase; color: var(--text-muted); cursor: pointer; }
+.panel-tab.active { color: var(--text-main); border-bottom: 2px solid var(--border-active); }
+
+
+
+
+#btnAutoSave { display: none; } /* 預設隱藏，僅切換到文才顯示 */
+#btnAutoSave.visible { display: inline-block; }
+/* AutoSave 開關狀態樣式 */
+#btnAutoSave.disabled {
+  opacity: 0.6;
+}
+#slapper-hide,#brushSizeSlider,#eraserSizeSlider { accent-color: var(--text-muted); width: 100px; }
+
+/* ====== 6. overlay-editor-section 共用(非定位)樣式 ======
+   定位相關 (position/top/right/left/width/height) 由 01.css / 02.css 各自決定 */
+.overlay-editor-section {
+  background-color: var(--bg-overlay-editor);
+  backdrop-filter: blur(3px);
+  box-shadow: -3px 0 10px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s ease;
+}
+
+.workspace-panel {
+  display: none !important;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+.workspace-panel.active { display: flex !important; }
+#workspacePanelsRoot{
+  width: 100%;height: 100%;
+}
+

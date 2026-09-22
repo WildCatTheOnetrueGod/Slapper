@@ -1,0 +1,387 @@
+:root {
+    --top-bg: #2c3e50;/*頂列背景*/
+    --top-color: #ecf0f1;/*頂列文字顏色*/
+    --border-color: #ccc;/*左右區塊、工具列邊框*/
+    --toolbar-bg: #f8f9fa;/* 工具列背景顏色 */
+    --btn-hover: #e2e6ea;/* 工具列按鈕懸浮色 */
+    --syntax-symbol: #1a5fb4; /* 深藍色語法符號 */
+    --font-mono: 'Consolas', 'Courier New', Monaco, 'Fira Code', monospace;
+  }
+
+
+
+  #workspaceMarkdown {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      /* overflow: hidden; */
+      background-color: transparent;
+    }
+    ::-webkit-scrollbar {/*捲軸背景*/
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {/*捲軸拉霸之外的空間*/
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {/*捲軸拉霸*/
+      border-radius: 3px;
+      background: var(--syntax-symbol);
+    }
+
+    /* 頂列 */
+    .top-bar {
+      height: 30px;
+      width: 100%;
+      background-color: var(--top-bg);
+      color: var(--top-color);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 10px;
+      gap: 10px;
+      font-size: 12px;
+      z-index: 10;
+      overflow-x: auto;
+    }
+
+    .top-bar label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .top-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: var(--top-color);
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .top-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .top-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* 內容列 */
+    .content-bar {
+      flex: 1;
+      display: flex;
+      height: calc(100% - 60px);
+      padding: 5px;
+      gap: 5px;
+      box-sizing: border-box;
+    }
+
+    .pane {
+      flex: 1;
+      height: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      width: 50%;
+    }
+
+    .pane.hidden {
+      display: none !important;
+    }
+
+    /* 預覽區塊 */
+    .preview-pane {
+      padding: 15px;
+      overflow-y: auto;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .preview-pane h1, .preview-pane h2, .preview-pane h3 {
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.3em;
+    }
+
+    .preview-pane p { margin-bottom: 1em; }
+    .preview-pane blockquote {
+      border-left: 4px solid #ddd;
+      padding-left: 10px;
+      color: #666;
+      margin: 1em 0;
+    }
+    .preview-pane code {
+      background: transparent;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+    }
+    .preview-pane pre {
+      background: transparent;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      height: auto !important; 
+      overflow-y: visible !important;
+      flex-shrink: 0;        /* 防止在 Flex 容器中被壓扁 */
+      align-self: flex-start; /* 讓它依據自身內容決定高度，而不是跟隨父層高度拉伸 */
+      height: max-content;
+    }
+    .preview-pane pre code { padding: 0; display: block; }
+    .preview-pane ul, .preview-pane ol { padding-left: 20px; margin-bottom: 1em; }
+    .preview-pane img { max-width: 100%; }
+
+    /* 程式/編輯區塊 */
+    .code-pane {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: transparent;
+    }
+
+    /* 高亮層與輸入框重疊對齊 CSS */
+    .editor-textarea, .editor-highlight {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0 !important;
+      padding: 10px !important;
+      border: none !important;
+      outline: none !important;
+
+      font-family: var(--font-mono) !important;
+      font-size: 13.5px !important;
+      line-height: 1.5 !important;
+      letter-spacing: 0px !important;
+      word-spacing: 0px !important;
+      tab-size: 4 !important;
+      -moz-tab-size: 4 !important;
+
+      white-space: pre-wrap !important;
+      word-wrap: break-word !important;
+      word-break: break-all !important;
+      overflow-y: scroll !important;
+      box-sizing: border-box !important;
+
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .editor-highlight {
+      z-index: 1;
+      color: #333;
+      pointer-events: none;
+      background: transparent;
+    }
+
+    .editor-textarea {
+      z-index: 2;
+      color: transparent !important;
+      caret-color: #000;
+      background: transparent;
+      resize: none;
+    }
+
+    .editor-textarea::selection {
+      background-color: rgba(0, 120, 215, 0.3);
+      color: transparent;
+    }
+
+    /* 語法符號高亮 */
+    .sym {
+      color: var(--syntax-symbol);
+      font-weight: bold;
+    }
+
+    /* 工具列 */
+    .toolbar {
+      height: 30px;
+      min-height: 30px;
+      background-color: var(--toolbar-bg);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 5px;
+      gap: 3px;
+      
+      white-space: nowrap;
+      overflow: visible !important;
+      overflow-x: auto !important;
+      position: relative;
+      z-index: 200; /* 確保工具列整體層級高於下方區域 */
+    }
+
+    .toolbar::-webkit-scrollbar {
+      height: 4px;
+    }
+    .toolbar::-webkit-scrollbar-thumb {
+      background: #ccc;
+    }
+
+    .tool-btn {
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #333;
+      flex-shrink: 0;
+    }
+
+    .tool-btn:hover:not(:disabled) {
+      background-color: var(--btn-hover);
+      border-color: #adadad;
+    }
+
+    .tool-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .tool-btn svg.line-icon {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 16px;
+      background-color: #ccc;
+      margin: 0 3px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+  /* ====== 工具列新增樣式 ====== */
+    .toolbar-select {
+      height: 24px;
+      font-size: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background: #fff;
+      color: #333;
+      padding: 0 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    .toolbar-select:hover {
+      border-color: #adadad;
+    }
+
+    /* 尋找與取代高亮背景 */
+    mark.find-match {
+      background-color: #b3d7ff !important;
+      color: inherit;
+      border-radius: 2px;
+    }
+    mark.find-match.active {
+      background-color: #0078d4 !important;
+      color: #fff !important;
+    }
+
+    /* 彈出搜尋/取代面板容器 */
+    .search-panel-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .find-popover {
+      position: fixed; /* 關鍵修改：改為 fixed */
+      bottom: 36px;
+      left: 0;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 99999;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    .find-popover.hidden {
+      display: none !important;
+    }
+
+    .find-popover input[type="text"] {
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      font-size: 12px;
+      outline: none;
+      width: 110px;
+    }
+    .find-popover input[type="text"]:focus {
+      border-color: #44a2d8;
+    }
+
+    .find-popover .count-span {
+      font-size: 12px;
+      color: #666;
+      min-width: 45px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .find-popover .pop-btn {
+      height: 24px;
+      padding: 0 6px;
+      border: 1px solid var(--border-color);
+      background: #f8f9fa;
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #333;
+    }
+    .find-popover .pop-btn:hover {
+      background: var(--btn-hover);
+    }

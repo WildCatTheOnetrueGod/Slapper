@@ -1,0 +1,378 @@
+:root {
+    --body-bg:#8c8e8f;/*網頁本體背景色*/
+    --default-font:rgb(141, 89, 89);/*摸魚裡的字體/UI色*/
+    --bar-bg-color: #121212;/*底列背景色*/
+    --barBtn-bg-color: rgba(255, 255, 255, 0.1);/*底列背景色*/
+    --text-color: #cccccc;/*底列文字色*/
+    --readme-bg-color:#a1a1a1;
+    --readme-text-color:#444444;
+    --overlay-bg: rgba(30, 30, 30, 0.9);/*摸魚背景色*/
+    --overlay-border: #444444;/*摸魚邊框色*/
+    --overlay-option:#444444;/*摸魚選單色*/
+}
+*,*::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+html,body{
+  min-height: 100vh;  /* 電腦版與舊手機舊瀏覽器保底 */
+	min-height: 100svh; /* (排除工具列後的最矮安全高度) */
+	min-height: 100dvh; /* 現代手機動態適應 */
+	width: 100dvw;
+	overflow: hidden; /* 防止最外層出現瀏覽器滾軸 */
+	display: flex;
+	flex-direction: column;
+	background: var(--body-bg);
+	color: var(--default-font);
+}
+button{
+  background: transparent;
+  border: 1px solid var(--default-font);
+}
+select,option{
+  background: var(--overlay-option);
+  color: var(--default-font);
+  border: 1px solid var(--overlay-border);
+}
+#slapper-hide,#brushSizeSlider,#eraserSizeSlider { accent-color: var(--default-font); }
+
+::-webkit-scrollbar {/*捲軸背景*/
+	height: 6px;
+	width: 6px;
+}
+::-webkit-scrollbar-track {/*捲軸拉霸之外的空間*/
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {/*捲軸拉霸*/
+	border-radius: 3px;
+	background: var(--overlay-border);
+}
+.content-row{
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  height: calc(100vh - 35px);
+}
+.content-row iframe {
+  position: relative;
+  z-index: 1; /* 比小元件小，但明確高於預設值 */
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  }
+  /* --- 重疊可移動/縮放區塊 --- */
+.overlay-editor-section {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 350px;
+    height: 250px;
+    background-color: var(--overlay-bg);
+    border: 1px solid var(--overlay-border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--overlay-border) 75%, black 25%);
+    backdrop-filter: blur(4px);
+    box-sizing: border-box;
+    touch-action: none;
+  }
+.overlay-header {
+    height: 28px;
+    background-color: color-mix(in srgb, var(--overlay-border) 90%, black 10%);
+    border-bottom: 1px solid var(--overlay-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 12px;
+    cursor: move;
+    user-select: none;
+  }
+
+.overlay-body {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  } 
+
+.resizer {
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    cursor: se-resize;
+    /* 【重點】：防止行動端預設手勢干擾 (如滑動頁面) */
+    touch-action: none; 
+    -webkit-user-select: none;
+    user-select: none;
+    z-index: 10;
+  }
+  /* 行動端優化：使用偽元素增加隱形點擊熱區 (Hit Area) */
+  .resizer::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  /* 讓觸控區域變大到 28x28px，但視覺上保持 12x12px */
+}
+  /* --- Overlay 邊界縮放熱區樣式 --- */
+.overlay-editor-section {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 350px;
+  height: 250px;
+  background-color: var(--overlay-bg);
+  border: 1px solid var(--overlay-border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--overlay-border) 75%, black 25%);
+  backdrop-filter: blur(4px);
+  box-sizing: border-box;
+}
+
+/* 基礎 Resizer 熱區屬性 */
+.resizer {
+  position: absolute;
+  z-index: 20;
+}
+
+  /* 四條邊界熱區 */
+  .resizer-t { top: -4px; left: 6px; right: 6px; height: 8px; cursor: ns-resize; }
+  .resizer-b { bottom: -4px; left: 6px; right: 6px; height: 8px; cursor: ns-resize; }
+  .resizer-l { left: -4px; top: 6px; bottom: 6px; width: 8px; cursor: ew-resize; }
+  .resizer-r { right: -4px; top: 6px; bottom: 6px; width: 8px; cursor: ew-resize; }
+
+  /* 四個角落熱區 */
+  .resizer-tl { top: -5px; left: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
+  .resizer-tr { top: -5px; right: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
+  .resizer-bl { bottom: -5px; left: -5px; width: 10px; height: 10px; cursor: nesw-resize; }
+  .resizer-br { bottom: -5px; right: -5px; width: 10px; height: 10px; cursor: nwse-resize; }
+
+  /* --- 底列 --- */
+  .bottom-bar {
+    width: 100%;
+    height: 35px;
+    background-color: var(--bar-bg-color);
+    border-top: 1px solid color-mix(in srgb, var(--bar-bg-color) 75%, black 25%);
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 12px;
+    user-select: none;
+  }
+
+  .bottom-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bar-btn, .file-upload-btn {
+    background-color: var(--barBtn-bg-color);
+    color: var(--text-color);
+    border: 1px solid color-mix(in srgb, var(--barBtn-bg-color) 75%, white 25%);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+  }
+
+  .bar-btn:hover, .file-upload-btn:hover {
+    background-color: color-mix(in srgb, var(--barBtn-bg-color) 75%, black 25%);
+  }
+
+.dropdown-wrapper{
+  position: relative !important;
+  display: inline-block !important;
+}
+/* Func 彈出菜單選單 (Pop-up Menu) */
+.func-dropdown-menu {
+  bottom: 100% !important; /* 核心：底部貼齊按鈕頂部 */
+  left: 0 !important;
+  margin-bottom: 6px !important; /* 與按鈕保持 6px 間距 */
+  z-index: 999 !important;
+  
+}
+  /* --- 🎨 調色盤面板 --- */
+.color-picker-panel {
+  display: none;
+  position: fixed;
+  bottom: 35px;
+  left: 10px;
+  width: 200px;
+  height: 200px;
+  background-color: var(--bar-bg-color);
+  border: 1px solid color-mix(in srgb, var(--barBtn-bg-color) 75%, white 25%);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--barBtn-bg-color) 75%, black 25%);
+  z-index: 200;
+  flex-direction: column;
+}
+
+.color-picker-panel.show {
+    display: flex;
+  }
+
+.panel-header {
+  height: 25px;
+  padding: 0 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--barBtn-bg-color) 75%, black 25%);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.panel-close {
+    cursor: pointer;
+  }
+
+.color-list-section {
+    height: 140px;
+    overflow-y: auto;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+.color-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+  }
+
+.color-item input[type="color"] {
+    border: none;
+    width: 24px;
+    height: 20px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+.panel-action-bar {
+    height: 30px;
+    border-top: 1px solid color-mix(in srgb, var(--bar-bg-color) 75%, black 25%);
+    background-color: var(--bar-bg-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 4px;
+  }
+.panel-action-bar button:hover {
+    background: color-mix(in srgb, var(--barBtn-bg-color) 80%, black 20%);
+  }
+
+.panel-action-bar button {
+    background: var(--barBtn-bg-color);
+    border: 1px solid color-mix(in srgb, var(--barBtn-bg-color) 75%, black 25%);
+    color: var(--text-color);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+
+.output-btn { display: none}
+.output-btn.visible { display: inline-block; }
+
+
+.readme-modal {
+  background: var(--readme-bg-color);
+  border: 1px solid color-mix(in srgb, var(--readme-bg-color) 75%, black 25%);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--readme-bg-color) 75%, black 25%);
+  color: var(--readme-text-color);
+}
+.readme-header { 
+  background: color-mix(in srgb, var(--readme-bg-color) 90%, black 10%);
+  border-bottom: 1px solid color-mix(in srgb, var(--readme-bg-color) 80%, black 20%); }
+
+/* 當前 Focus 狀態樣式調整 */
+.content-row.active-block-1 #mainIframe { z-index: 3;  }
+.content-row.active-block-2 #mainIframe { z-index: 1;  }
+.content-row.active-block-1 .overlay-editor-section { z-index: 2; display:none;}
+.content-row.active-block-2 .overlay-editor-section { z-index: 3; display:flex;}
+
+
+.top-bar {
+    background-color: var(--top-bg);
+    color: var(--top-color);
+  }
+.top-btn {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--top-color);
+  
+}
+.top-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.preview-pane {
+  color: #333;
+}
+
+.preview-pane h1, .preview-pane h2, .preview-pane h3 {
+  border-bottom: 1px solid #eee;
+}
+
+.preview-pane p { margin-bottom: 1em; }
+.preview-pane blockquote {
+  border-left: 4px solid #ddd;
+  color: #666;
+}
+.editor-highlight {
+  color: #333;
+}
+
+.editor-textarea {
+  caret-color: #000;
+}
+
+.editor-textarea::selection {
+  background-color: rgba(0, 120, 215, 0.3);
+}
+/* 語法符號高亮 */
+.sym {
+  color: var(--syntax-symbol);
+}
+
+/* 工具列 */
+.toolbar {
+  background-color: var(--toolbar-bg);
+  border-top: 1px solid var(--border-color);
+}
+.toolbar::-webkit-scrollbar-thumb {
+  background: #ccc;
+}
+
+.tool-btn {
+  color: #333;
+}
+
+.tool-btn:hover:not(:disabled) {
+  background-color: var(--btn-hover);
+  border-color: #adadad;
+}
+
+.toolbar-divider {
+  background-color: #ccc;
+}
