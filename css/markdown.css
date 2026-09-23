@@ -205,7 +205,7 @@
     .editor-textarea {
       z-index: 2;
       color: transparent !important;
-      caret-color: var(--overlay-text-color, --default-font);
+      caret-color: var(--syntax-symbol) !important;
       background: transparent;
       resize: none;
     }
