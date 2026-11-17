@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>直笛虛擬電子琴</title>
+  <link rel="stylesheet" href="../css/music.css" />
+</head>
+<body>
+  <div class="header"></div>
+
+  <div class="funcbar">
+    <!-- 左側：錄音控制區 -->
+    <div class="record">
+      <button id="btn-record" class="rec-btn" title="錄音/停止">
+        <span class="rec-icon"></span>
+        <span class="rec-text">Rec</span>
+      </button>
+      <span id="rec-timer" class="rec-timer"></span>
+      <button id="btn-clear" class="action-btn hidden" title="清除錄製">🗑️</button>
+      <button id="btn-download" class="action-btn hidden" title="下載音檔">⬇️</button>
+    </div>
+
+    <!-- 右側：音色單選按鈕組 -->
+    <div class="tone">
+      <label class="tone-option">
+        <input type="radio" name="tone-mode" value="電子音" />
+        <span class="radio-circle"></span>
+        <span class="tone-label">電子音</span>
+      </label>
+      <label class="tone-option">
+        <input type="radio" name="tone-mode" value="全按當1" checked />
+        <span class="radio-circle"></span>
+        <span class="tone-label">全按當1</span>
+      </label>
+      <label class="tone-option">
+        <input type="radio" name="tone-mode" value="全按當5" />
+        <span class="radio-circle"></span>
+        <span class="tone-label">全按當5</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- 電子琴主體 -->
+  <div class="player-wrapper">
+    <div class="player" id="piano-player">
+      <!-- 琴鍵將由 JS 動態生成，確保黑白鍵精準交錯與觸控綁定 -->
+    </div>
+  </div>
+
+  <!-- 高低階與連音控制區 -->
+  <div class="key">
+    <div class="octave-row">
+      <button class="mod-btn oct-upup" data-octave="upup">高高</button>
+      <button class="mod-btn oct-up" data-octave="up">高</button>
+      <button class="mod-btn oct-downdown" data-octave="downdown">低低</button>
+      <button class="mod-btn oct-down" data-octave="down">低</button>
+    </div>
+    <div class="legato-row">
+      <button class="legato-btn" id="btn-legato">連音</button>
+    </div>
+  </div>
+
+  <script src="../js/music.js"></script>
+</body>
+</html>
