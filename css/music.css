@@ -8,6 +8,10 @@
 }
 
 body {
+  min-height: 100vh;  /* 電腦版與舊手機舊瀏覽器保底 */
+	min-height: 100svh; /* (排除工具列後的最矮安全高度) */
+	min-height: 100dvh; /* 現代手機動態適應 */
+	width: 100dvw;
   font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
   background-color: #ffffff;
   color: #5b4372;
@@ -28,7 +32,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  max-width: 900px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -156,19 +160,13 @@ body {
   background-color: #ffffff;
 }
 
-/* 電子琴主體外層（支援水平置中與卷軸） */
+/* 電子琴主體外層：取消捲軸、改為 100% 寬度自適應 */
 .player-wrapper {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden; /* 確保絕對不產生水平卷軸 */
   padding: 20px 16px 10px 16px;
   display: flex;
   justify-content: center;
-}
-
-@media (max-width: 560px) {
-  .player-wrapper {
-    justify-content: flex-start; /* 小螢幕超出寬度時靠左對齊以利滑動 */
-  }
 }
 
 .player {
@@ -176,23 +174,25 @@ body {
   display: flex;
   align-items: flex-start;
   height: 220px;
-  padding: 0 22px; /* 預留最左與最右黑鍵的突出空間 */
-  touch-action: none; /* 重要：鎖定琴鍵區域的瀏覽器預設捲動，讓上下滑動音量完全順暢 */
+  width: 100%;
+  max-width: 600px; /* 限制在大螢幕上的最大寬度，可依喜好調整 */
+  padding: 0 10px;
+  touch-action: none;
 }
 
-/* 白鍵 */
+/* 白鍵：改用 flex: 1 自動均分寬度 */
 .white-key {
-  width: 58px;
+  flex: 1;
   height: 205px;
-  margin-top: 15px; /* 讓黑鍵略高一節 */
-  margin-right: 8px;
+  margin-top: 15px;
+  margin-right: 3px; /* 白鍵間距縮小一點，適應手機螢幕 */
   background-color: #eae9eb;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 24px;
   font-size: 19px;
-  color: #000000; /* 題目要求白鍵數字為黑色字體 */
+  color: #000000;
   cursor: pointer;
   position: relative;
   z-index: 1;
@@ -207,11 +207,10 @@ body {
   background-color: #c5c3c8;
 }
 
-/* 黑鍵（略高一節，無數字） */
+/* 黑鍵：改由 JavaScript 動態計算百分比寬度與位置，此處僅定義基本樣式 */
 .black-key {
   position: absolute;
   top: 0;
-  width: 34px;
   height: 128px;
   background-color: #6b6b6b;
   z-index: 2;
