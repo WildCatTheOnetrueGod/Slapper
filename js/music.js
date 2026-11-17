@@ -231,18 +231,22 @@ function stopVoice(voice, isCrossfade = false) {
 // ==========================================
 const playerEl = document.getElementById("piano-player");
 const whiteNotes = ["1", "2", "3", "4", "5", "6", "7"];
-const blackNotes = [
-  { note: "♭1", leftOffset: 5 },   // 1 左側
-  { note: "♭2", leftOffset: 71 },  // 1 與 2 之間
-  { note: "♭3", leftOffset: 137 }, // 2 與 3 之間
-  { note: "♭4", leftOffset: 203 }, // 3 與 4 之間
-  { note: "♭5", leftOffset: 269 }, // 4 與 5 之間
-  { note: "♭6", leftOffset: 335 }, // 5 與 6 之間
-  { note: "♭7", leftOffset: 401 }, // 6 與 7 之間
-  { note: "♭1", leftOffset: 467 }  // 7 右側高八度半音（對應圖片最右側黑鍵）
+
+// 改用比例（基於白鍵的相對位置百分比）來定位黑鍵，實現完美自適應
+const blackNotePositions = [
+  { note: "♭1", percent: 1 },   // 1 左側
+  { note: "♭2", percent: 15.2 }, // 1 與 2 之間
+  { note: "♭3", percent: 29 }, // 2 與 3 之間
+  { note: "♭4", percent: 43 }, // 3 與 4 之間
+  { note: "♭5", percent: 56.5 }, // 4 與 5 之間
+  { note: "♭6", percent: 70.5 },   // 5 與 6 之間
+  { note: "♭7", percent: 84.2 }  // 6 與 7 之間
 ];
 
 function buildKeyboard() {
+  // 清空舊琴鍵（防止重複呼叫時累積）
+  playerEl.innerHTML = "";
+
   // 生成白鍵
   whiteNotes.forEach((note) => {
     const key = document.createElement("div");
@@ -253,16 +257,44 @@ function buildKeyboard() {
     playerEl.appendChild(key);
   });
 
-  // 生成黑鍵（略高一節，不顯示數字）
-  blackNotes.forEach((item) => {
-    const key = document.createElement("div");
-    key.className = "black-key";
-    key.dataset.note = item.note;
-    key.style.left = `${item.leftOffset}px`;
-    bindKeyEvents(key);
-    playerEl.appendChild(key);
+  // 延遲一小步或直接計算黑鍵寬度（黑鍵寬度約為白鍵的 55% 左右）
+  requestAnimationFrame(() => {
+    const firstWhiteKey = playerEl.querySelector(".white-key");
+    if (!firstWhiteKey) return;
+    const whiteKeyWidth = firstWhiteKey.offsetWidth;
+    const blackKeyWidth = Math.round(whiteKeyWidth * 0.58); // 黑鍵寬度隨白鍵等比例縮放
+
+    blackNotePositions.forEach((item) => {
+      const key = document.createElement("div");
+      key.className = "black-key";
+      key.dataset.note = item.note;
+      key.style.width = `${blackKeyWidth}px`;
+      
+      // 根據容器總寬度計算精準的百分比位置（扣除兩側 padding 影響）
+      key.style.left = `calc(${item.percent}% - ${blackKeyWidth / 2}px)`;
+      
+      bindKeyEvents(key);
+      playerEl.appendChild(key);
+    });
   });
 }
+
+// 監聽視窗大小改變時，即時重新計算黑鍵寬度，確保畫面旋轉或縮放時依然精準
+window.addEventListener("resize", () => {
+  const firstWhiteKey = playerEl.querySelector(".white-key");
+  const blackKeys = playerEl.querySelectorAll(".black-key");
+  if (!firstWhiteKey || blackKeys.length === 0) return;
+
+  const whiteKeyWidth = firstWhiteKey.offsetWidth;
+  const blackKeyWidth = Math.round(whiteKeyWidth * 0.58);
+
+  blackKeys.forEach((key, index) => {
+    if (blackNotePositions[index]) {
+      key.style.width = `${blackKeyWidth}px`;
+      key.style.left = `calc(${blackNotePositions[index].percent}% - ${blackKeyWidth / 2}px)`;
+    }
+  });
+});
 
 function bindKeyEvents(keyEl) {
   keyEl.addEventListener("pointerdown", async (e) => {
