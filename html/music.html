@@ -49,17 +49,29 @@
   </div>
 
   <!-- 高低階與連音控制區 -->
-  <div class="key">
-    <div class="octave-row">
-      <button class="mod-btn oct-upup" data-octave="upup">高高</button>
-      <button class="mod-btn oct-up" data-octave="up">高</button>
-      <button class="mod-btn oct-downdown" data-octave="downdown">低低</button>
-      <button class="mod-btn oct-down" data-octave="down">低</button>
-    </div>
-    <div class="legato-row">
-      <button class="legato-btn" id="btn-legato">連音</button>
-    </div>
+<!-- 控制面板：左右八度按鈕 + 中間連音按鈕 -->
+<div class="control-panel">
+  <!-- 左側八度按鈕（縱向） -->
+  <div class="octave-column left">
+    <button class="mod-btn oct-upup" data-octave="upup">高高</button>
+    <button class="mod-btn oct-up" data-octave="up">高</button>
+    <button class="mod-btn oct-down" data-octave="down">低</button>
+    <button class="mod-btn oct-downdown" data-octave="downdown">低低</button>
   </div>
+
+  <!-- 中間下方：連音切換按鈕 -->
+  <div class="legato-center">
+    <button class="legato-btn" id="btn-legato">連音</button>
+  </div>
+
+  <!-- 右側八度按鈕（縱向，結構對應） -->
+  <div class="octave-column right">
+    <button class="mod-btn oct-upup" data-octave="upup">高高</button>
+    <button class="mod-btn oct-up" data-octave="up">高</button>
+    <button class="mod-btn oct-down" data-octave="down">低</button>
+    <button class="mod-btn oct-downdown" data-octave="downdown">低低</button>
+  </div>
+</div>
 
   <script src="../js/music.js"></script>
 </body>
