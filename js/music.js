@@ -90,7 +90,7 @@ let recordDest = null;
 const audioBufferCache = new Map();
 
 // 互動狀態
-let currentToneMode = "全按當1"; // "電子音" | "全按當1" | "全按當5"
+let currentToneMode = "電子音"; // "電子音" | "全按當1" | "全按當5"
 let activeOctave = null; // null | "up" | "upup" | "down" | "downdown"
 let isLegato = false;
 
