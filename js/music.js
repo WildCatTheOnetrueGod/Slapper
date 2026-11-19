@@ -313,10 +313,10 @@ function bindKeyEvents(keyEl) {
       }
       const voice = await startNote(note, baseVolume, true);
       legatoVoice = voice;
-      activeVoices.set(e.pointerId, { voice, startY, baseVolume, keyEl });
+      activeVoices.set(e.pointerId, { voice, startY, baseVolume, keyEl, note });
     } else {
       const voice = await startNote(note, baseVolume, false);
-      activeVoices.set(e.pointerId, { voice, startY, baseVolume, keyEl });
+      activeVoices.set(e.pointerId, { voice, startY, baseVolume, keyEl, note });
     }
   });
 
@@ -356,19 +356,37 @@ function bindKeyEvents(keyEl) {
 buildKeyboard();
 
 // ==========================================
-// 4. 高低階與連音控制按鈕事件
+// 4. 高低階與連音控制按鈕事件 (更新版)
 // ==========================================
+
+// 因為左右兩側都有相同的八度按鈕，我們用 class 抓取全部並同步狀態
 document.querySelectorAll(".mod-btn").forEach((btn) => {
-  btn.addEventListener("pointerdown", (e) => {
+  const octaveType = btn.dataset.octave;
+
+  btn.addEventListener("pointerdown", async (e) => {
     e.preventDefault();
     btn.setPointerCapture(e.pointerId);
-    btn.classList.add("active");
-    activeOctave = btn.dataset.octave;
+
+    // 同步左右兩側相同八度按鈕的 active 視覺狀態
+    document.querySelectorAll(`.mod-btn[data-octave="${octaveType}"]`).forEach(b => b.classList.add("active"));
+    
+    const prevOctave = activeOctave;
+    activeOctave = octaveType;
+
+    // 需求：若「先按黑白鍵才按高低階按鈕」，要變成一個原音~高/低8度音的連音
+    if (activeVoices.size > 0 && prevOctave !== activeOctave) {
+      for (let [pointerId, record] of activeVoices.entries()) {
+        // 停止舊的當前音，無縫切換到新八度音
+        stopVoice(record.voice, true);
+        const newVoice = await startNote(record.note, record.volume, true);
+        record.voice = newVoice;
+      }
+    }
   });
 
   const releaseOctave = (e) => {
-    btn.classList.remove("active");
-    if (activeOctave === btn.dataset.octave) {
+    document.querySelectorAll(`.mod-btn[data-octave="${octaveType}"]`).forEach(b => b.classList.remove("active"));
+    if (activeOctave === octaveType) {
       activeOctave = null;
     }
   };
@@ -377,32 +395,20 @@ document.querySelectorAll(".mod-btn").forEach((btn) => {
   btn.addEventListener("pointercancel", releaseOctave);
 });
 
+// 連音按鈕改為：點擊一下切換開關 (Toggle)
 const legatoBtn = document.getElementById("btn-legato");
-legatoBtn.addEventListener("pointerdown", (e) => {
-  e.preventDefault();
-  legatoBtn.setPointerCapture(e.pointerId);
-  legatoBtn.classList.add("active");
-  isLegato = true;
-});
-
-const releaseLegato = () => {
-  legatoBtn.classList.remove("active");
-  isLegato = false;
-  // 放開連音鍵時，若無手指按在琴鍵上，立即停止連音延音
-  if (legatoVoice && activeVoices.size === 0) {
-    stopVoice(legatoVoice, false);
-    legatoVoice = null;
+legatoBtn.addEventListener("click", () => {
+  isLegato = !isLegato;
+  if (isLegato) {
+    legatoBtn.classList.add("active");
+  } else {
+    legatoBtn.classList.remove("active");
+    // 關閉連音時，若當前有殘留的 legatoVoice 則停止
+    if (legatoVoice && activeVoices.size === 0) {
+      stopVoice(legatoVoice, false);
+      legatoVoice = null;
+    }
   }
-};
-
-legatoBtn.addEventListener("pointerup", releaseLegato);
-legatoBtn.addEventListener("pointercancel", releaseLegato);
-
-// 音色單選切換
-document.querySelectorAll('input[name="tone-mode"]').forEach((radio) => {
-  radio.addEventListener("change", (e) => {
-    currentToneMode = e.target.value;
-  });
 });
 
 // ==========================================
